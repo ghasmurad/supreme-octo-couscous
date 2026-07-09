@@ -1,99 +1,50 @@
-# Happy Hour Arcade
+# Happy Hour Lite
 
-A GitHub Pages-ready virtual happy hour game room with player, host, and shared-display modes.
+A simplified one-event virtual happy hour game app.
 
-## What is included
+## Flow
 
-### V1 MVP
-- Join room
-- Add your name and avatar
-- Select a team
-- Host dashboard
-- Shared display mode for screen-sharing
-- Live scoreboard
-- Majority Rules
-- Team Trivia
-- Guess the Emoji
+1. Add your name
+2. Pick a team
+3. Host starts games in order
 
-### V2 additions
-- Fun intro cards
-- Randomized intro order
-- 45-second intro timer
-- Team Superlatives
-- Final Bonus: “Who Said That?” using submitted intro facts
-- Confetti
-- Sound toggle
-- Team name editing
-- Manual score override
+No room codes, no info cards, no setup flow for players.
 
-## Files
+## Host
 
-- `index.html` — main app
-- `style.css` — visual styling
-- `app.js` — game logic
-- `firebase-config.js` — optional real-time config
+Click **Host** and enter:
 
-## GitHub Pages setup
+`password123`
 
-1. Create a new GitHub repository.
-2. Upload all four files into the root of the repository.
-3. Go to **Settings → Pages**.
-4. Set source to **Deploy from a branch**.
-5. Select branch `main` and folder `/root`.
-6. Save.
+The host can start games, advance rounds, reveal results, and adjust scores.
 
-Your site will publish at something like:
+## Live multi-device mode
 
-`https://YOUR-USERNAME.github.io/YOUR-REPO/`
+GitHub Pages is static, so live answers across different devices need Firebase Realtime Database.
 
-## Real-time multiplayer setup
-
-GitHub Pages is static, so it cannot sync answers across 18 separate devices by itself. To make this fully live, use Firebase Realtime Database.
-
-### Firebase steps
-
-1. Go to Firebase Console.
-2. Create a project.
-3. Add a Web App.
-4. Copy the Firebase config object.
-5. Enable **Realtime Database**.
-6. Paste your config into `firebase-config.js` by replacing:
-
-```js
-window.HHA_FIREBASE_CONFIG = null;
-```
-
-with your real config object.
-
-### Temporary event rules
-
-For a one-off internal happy hour, you can use permissive temporary rules during the event:
+1. Create a Firebase project
+2. Enable Realtime Database
+3. Set temporary rules for the event:
 
 ```json
 {
   "rules": {
-    "rooms": {
-      "$room": {
-        ".read": true,
-        ".write": true
-      }
+    "happyHourLiteSingleEvent": {
+      ".read": true,
+      ".write": true
     }
   }
 }
 ```
 
-After the event, lock the rules back down or delete the Firebase project/database.
+4. Paste your Firebase Web App config into `firebase-config.js`
+5. Upload all files to GitHub Pages
 
-## How to run the event
+If `firebase-config.js` is left as `null`, the app runs in local demo mode in one browser.
 
-1. Open the site.
-2. Click **Create New Room**.
-3. Enter host password: `password123`.
-4. Copy the **Player Link** and send it to everyone.
-5. Open the **Display Link** and screen-share it.
-6. Let everyone join, choose teams, and fill out intro cards.
-7. Use the host dashboard to start games and score rounds.
+## Files
 
-## Important security note
-
-The host password is client-side only. It hides the admin controls from casual participants, but it is not real authentication. For this internal happy hour use case, that is usually fine. Do not use this for sensitive data.
+- `index.html`
+- `app.js`
+- `firebase-config.js`
+- `README.md`

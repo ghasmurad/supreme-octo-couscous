@@ -3,45 +3,48 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Happy Hour Arcade</title>
-  <meta name="description" content="A live virtual happy hour game room for intros, Majority Rules, trivia, emoji puzzles, superlatives, and final bonus rounds." />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2785%27%3E%F0%9F%8E%89%3C/text%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="style.css" />
+  <title>Happy Hour Lite</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='85'%3E🎉%3C/text%3E%3C/svg%3E">
+  <style>
+    :root{
+      --bg:#0c1020;--panel:#151b34;--panel2:#202846;--text:#f7f3ff;--muted:#b9b5c9;--line:rgba(255,255,255,.13);
+      --accent:#ffcf4a;--pink:#ff5fb7;--green:#55e6a5;--blue:#75c7ff;--red:#ff7373;--shadow:0 24px 80px rgba(0,0,0,.35);--radius:24px;
+    }
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(circle at 15% 0%,rgba(255,95,183,.23),transparent 30%),radial-gradient(circle at 90% 8%,rgba(117,199,255,.18),transparent 30%),linear-gradient(160deg,#0c1020 0%,#10162b 45%,#121a2a 100%);color:var(--text);min-height:100vh}
+    button,input,select,textarea{font:inherit} button{border:0;cursor:pointer} button:disabled{opacity:.45;cursor:not-allowed}.hidden{display:none!important}
+    .top{position:sticky;top:0;z-index:30;background:rgba(12,16,32,.78);backdrop-filter:blur(16px);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 22px}
+    .brand{display:flex;align-items:center;gap:12px}.logo{display:grid;place-items:center;width:45px;height:45px;border-radius:16px;background:linear-gradient(135deg,var(--pink),var(--accent));box-shadow:0 10px 30px rgba(255,95,183,.25);font-size:24px}.brand h1{font-size:18px;margin:0}.brand p{margin:2px 0 0;color:var(--muted);font-weight:700;font-size:13px}.top-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.pill{border:1px solid var(--line);background:rgba(255,255,255,.07);color:var(--text);padding:10px 14px;border-radius:999px;font-weight:900}.pill.primary{background:linear-gradient(135deg,var(--pink),var(--accent));color:#101020;border:0}.pill.green{background:linear-gradient(135deg,var(--green),var(--blue));color:#07111d;border:0}
+    main{max-width:1120px;margin:0 auto;padding:34px 18px 120px}.card{background:linear-gradient(180deg,rgba(255,255,255,.085),rgba(255,255,255,.045));border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px}.hero{text-align:center;max-width:760px;margin:46px auto}.hero h2{font-size:clamp(36px,6vw,72px);line-height:.95;margin:14px 0}.hero p{font-size:18px;color:var(--muted);line-height:1.55}.big-input{width:100%;max-width:470px;border:1px solid var(--line);background:rgba(0,0,0,.25);color:var(--text);border-radius:18px;padding:18px 20px;font-size:20px;font-weight:800;outline:none;text-align:center}.primary-btn{background:linear-gradient(135deg,var(--pink),var(--accent));color:#141022;padding:16px 22px;border-radius:18px;font-weight:1000;box-shadow:0 14px 30px rgba(255,95,183,.22)}.secondary-btn{background:rgba(255,255,255,.09);color:var(--text);border:1px solid var(--line);padding:14px 18px;border-radius:16px;font-weight:900}.danger-btn{background:rgba(255,115,115,.15);color:#ffd0d0;border:1px solid rgba(255,115,115,.35);padding:12px 16px;border-radius:16px;font-weight:900}.row{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}.grid{display:grid;gap:16px}.teams{grid-template-columns:repeat(3,minmax(0,1fr))}.team-card{position:relative;overflow:hidden;min-height:180px}.team-card h3{font-size:26px;margin:0 0 6px}.score{font-size:50px;font-weight:1000;letter-spacing:-2px}.muted{color:var(--muted)}.player-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.chip{background:rgba(255,255,255,.09);border:1px solid var(--line);border-radius:999px;padding:8px 11px;font-weight:800}.chip.me{background:rgba(255,207,74,.18);border-color:rgba(255,207,74,.5)}.team-btn{display:block;width:100%;text-align:left;border-radius:22px;padding:22px;background:rgba(255,255,255,.07);border:1px solid var(--line);color:var(--text);transition:.15s transform,.15s background}.team-btn:hover{transform:translateY(-3px);background:rgba(255,255,255,.11)}.team-btn strong{font-size:25px}.team-btn span{display:block;color:var(--muted);margin-top:8px}.game-title{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px}.game-title h2{font-size:clamp(28px,4vw,46px);margin:0}.question{font-size:clamp(30px,5vw,62px);line-height:1.05;margin:16px 0 24px;text-align:center;font-weight:1000}.emoji-question{font-size:clamp(52px,9vw,120px);letter-spacing:8px}.options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.option{background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.055));color:var(--text);border:1px solid var(--line);border-radius:24px;padding:26px;font-size:28px;font-weight:1000;min-height:120px}.option.selected{outline:4px solid rgba(255,207,74,.75);background:rgba(255,207,74,.18)}.submitted{font-size:22px;text-align:center;padding:20px;border-radius:18px;background:rgba(85,230,165,.12);border:1px solid rgba(85,230,165,.35);font-weight:900}.bar{height:42px;background:rgba(255,255,255,.09);border:1px solid var(--line);border-radius:999px;overflow:hidden}.bar-fill{height:100%;background:linear-gradient(90deg,var(--pink),var(--accent));border-radius:999px;min-width:10px}.result-row{display:grid;grid-template-columns:150px 1fr 56px;gap:12px;align-items:center;margin:12px 0}.scoreboard{grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:18px}.answer-input{width:100%;border:1px solid var(--line);background:rgba(0,0,0,.22);color:var(--text);border-radius:18px;padding:18px 20px;font-size:22px;font-weight:800;outline:none}.team-answer{padding:16px;border-radius:18px;background:rgba(255,255,255,.07);border:1px solid var(--line);margin:10px 0}.host-panel{position:fixed;left:16px;right:16px;bottom:16px;z-index:40;background:rgba(15,19,36,.92);backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);padding:14px}.host-panel h3{margin:0 0 12px}.host-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:12px;align-items:start}.host-section{background:rgba(255,255,255,.055);border:1px solid var(--line);border-radius:18px;padding:12px}.host-section h4{margin:0 0 10px;color:var(--accent)}.host-section .row{justify-content:flex-start}.small{font-size:13px}.modal{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.55);z-index:60;padding:18px}.modal-card{width:min(420px,100%);background:#151b34;border:1px solid var(--line);border-radius:24px;padding:24px;box-shadow:var(--shadow)}.modal-card h2{margin-top:0}.modal-card input{width:100%;margin:10px 0 14px;border:1px solid var(--line);background:rgba(0,0,0,.22);color:var(--text);border-radius:16px;padding:14px 16px;font-weight:800}.toast{position:fixed;top:86px;left:50%;transform:translateX(-50%);background:#fff;color:#141022;border-radius:999px;padding:12px 18px;font-weight:1000;z-index:80;box-shadow:var(--shadow)}.confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:70}.confetti i{position:absolute;top:-20px;width:10px;height:18px;background:var(--accent);animation:fall 1.5s linear forwards;border-radius:3px}@keyframes fall{to{transform:translateY(110vh) rotate(520deg);opacity:.8}}textarea{resize:vertical}.winner{font-size:22px;font-weight:1000;color:var(--accent)}.tiny-link{color:var(--muted);background:transparent;text-decoration:underline;padding:0}.host-compact .host-grid{display:none}.hide-admin .host-panel{display:none!important}.hide-admin .top-actions .admin-hide-status{display:inline-flex!important}.admin-hide-status{display:none!important}
+    @media (max-width:850px){.teams,.scoreboard,.options{grid-template-columns:1fr}.host-grid{grid-template-columns:1fr}.top{align-items:flex-start}.host-panel{position:static;margin:22px 0 0}.hide-admin .host-panel{display:none}.question{text-align:left}.emoji-question{text-align:center}.result-row{grid-template-columns:90px 1fr 40px}}
+  </style>
 </head>
 <body>
-  <div class="bg-orbs" aria-hidden="true">
-    <span></span><span></span><span></span>
+  <div class="top">
+    <div class="brand"><div class="logo">🎉</div><div><h1>Happy Hour Lite</h1><p id="modeLabel">Starting…</p></div></div>
+    <div class="top-actions">
+      <button class="pill" id="copyLinkBtn">Copy Link</button>
+      <button class="pill" id="soundBtn">Sound: Off</button>
+      <button class="pill admin-hide-status hidden" id="showAdminBtn">Show Host</button>
+      <button class="pill primary" id="hostBtn">Host</button>
+    </div>
+  </div>
+  <main id="app"></main>
+
+  <div id="hostModal" class="modal hidden">
+    <div class="modal-card">
+      <h2>Host Controls</h2>
+      <p class="muted">Enter the host password.</p>
+      <input id="hostPassword" type="password" placeholder="Password" />
+      <div class="row" style="justify-content:flex-start"><button class="primary-btn" id="unlockHostBtn">Unlock</button><button class="secondary-btn" id="cancelHostBtn">Cancel</button></div>
+    </div>
   </div>
 
-  <header class="topbar">
-    <button class="brand" data-action="go-home" aria-label="Happy Hour Arcade home">
-      <span class="brand-mark">🎉</span>
-      <span>
-        <strong>Happy Hour Arcade</strong>
-        <small id="connectionStatus">Local demo mode</small>
-      </span>
-    </button>
-    <div class="topbar-actions">
-      <span class="pill subtle" id="roomPill">No room</span>
-      <button class="ghost small" data-action="copy-link">Copy Link</button>
-      <button class="ghost small" data-action="toggle-sound">Sound: Off</button>
-    </div>
-  </header>
-
-  <main id="app" class="app-shell" aria-live="polite"></main>
-
-  <template id="modalTemplate">
-    <div class="modal-backdrop" role="dialog" aria-modal="true">
-      <div class="modal-card">
-        <button class="modal-close" data-action="close-modal" aria-label="Close">×</button>
-        <div class="modal-content"></div>
-      </div>
-    </div>
-  </template>
-
-  <canvas id="confettiCanvas" aria-hidden="true"></canvas>
+  <div id="toast" class="toast hidden"></div>
+  <div id="confetti" class="confetti"></div>
 
   <script src="firebase-config.js"></script>
-  <script type="module" src="app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

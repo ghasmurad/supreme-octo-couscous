@@ -18,5 +18,5 @@ window.HHA_CONFIG = {
   storageBucket: "happy-hour-arcade.firebasestorage.app",
   messagingSenderId: "804367537319",
   appId: "1:804367537319:web:fe0484d648642828bdf782"
-};
-};
+}
+}

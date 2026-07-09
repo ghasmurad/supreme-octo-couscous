@@ -1,608 +1,1085 @@
 (() => {
-  const HOST_PASSWORD = 'password123';
-  const DATA_ROOT = 'happyHourLiteSingleEvent';
-  const PLAYER_KEY = 'hha_lite_player_id';
-  const HOST_KEY = 'hha_lite_host_unlocked';
-  const SOUND_KEY = 'hha_lite_sound';
+  "use strict";
 
-  const emojis = ['🎈','🎯','🍕','🦄','🚀','🌮','🐸','✨','🍩','🎧','🧃','🧠','🪩','🔥','🐙','🌟','🍿','🕺'];
+  const $app = document.getElementById("app");
+  const CONFIG = window.HHA_CONFIG || {};
+  const EVENT_ID = sanitizeEventId(CONFIG.eventId || "happy-hour-main");
+  const STORAGE_KEY = `hha_player_${EVENT_ID}`;
+  const HOST_KEY = `hha_host_${EVENT_ID}`;
+  const TEAM_IDS = ["A", "B", "C"];
+  const AVATARS = ["✨", "🚀", "🎯", "⚡", "🌟", "🧠", "🎬", "☕", "🍕", "🧩", "🏆", "😎"];
 
-  const banks = {
+  const QUESTIONS = {
     majority: [
-      { q: 'Coffee or tea?', options: ['Coffee', 'Tea'] },
-      { q: 'Beach or mountains?', options: ['Beach', 'Mountains'] },
-      { q: 'Early bird or night owl?', options: ['Early bird', 'Night owl'] },
-      { q: 'Sweet or salty?', options: ['Sweet', 'Salty'] },
-      { q: 'Texting or calling?', options: ['Texting', 'Calling'] },
-      { q: 'Comedy or drama?', options: ['Comedy', 'Drama'] },
-      { q: 'Cook at home or order in?', options: ['Cook at home', 'Order in'] },
-      { q: 'Beach house or mountain cabin?', options: ['Beach house', 'Mountain cabin'] },
-      { q: 'Give up email or Teams/Slack?', options: ['Email', 'Teams/Slack'] },
-      { q: 'Every meeting 15 minutes or every meeting has snacks?', options: ['15 minutes', 'Snacks'] }
+      { q: "Coffee or tea?", options: ["Coffee", "Tea"] },
+      { q: "Beach or mountains?", options: ["Beach", "Mountains"] },
+      { q: "Early bird or night owl?", options: ["Early bird", "Night owl"] },
+      { q: "Sweet or salty?", options: ["Sweet", "Salty"] },
+      { q: "Texting or calling?", options: ["Texting", "Calling"] },
+      { q: "Comedy or drama?", options: ["Comedy", "Drama"] },
+      { q: "Work from a beach house or a mountain cabin?", options: ["Beach house", "Mountain cabin"] },
+      { q: "Give up email or give up Teams?", options: ["Email", "Teams"] }
     ],
     trivia: [
-      { q: 'What show is set in Scranton, Pennsylvania?', answer: 'The Office' },
-      { q: 'What movie features the line “May the Force be with you”?', answer: 'Star Wars' },
-      { q: 'What show has a coffee shop called Central Perk?', answer: 'Friends' },
-      { q: 'What movie features a wizarding school called Hogwarts?', answer: 'Harry Potter' },
-      { q: 'What movie is about a clownfish searching for his son?', answer: 'Finding Nemo' },
-      { q: 'What show features the phrase “Winter is coming”?', answer: 'Game of Thrones' },
-      { q: 'What movie features the song “Let It Go”?', answer: 'Frozen' },
-      { q: 'What movie has a character named Jack Sparrow?', answer: 'Pirates of the Caribbean' }
+      { q: "What TV show is set in Scranton, Pennsylvania?", a: "The Office" },
+      { q: "What show has a coffee shop called Central Perk?", a: "Friends" },
+      { q: "What movie features the line “I’ll be back”?", a: "The Terminator" },
+      { q: "What movie features the song “Let It Go”?", a: "Frozen" },
+      { q: "What show features the phrase “Winter is coming”?", a: "Game of Thrones" },
+      { q: "What movie has a wizarding school called Hogwarts?", a: "Harry Potter" }
     ],
     emoji: [
-      { q: '🧙‍♂️💍🗻', answer: 'Lord of the Rings' },
-      { q: '🐠🔎🌊', answer: 'Finding Nemo' },
-      { q: '🚢🧊💔', answer: 'Titanic' },
-      { q: '🦁👑', answer: 'The Lion King' },
-      { q: '🕷️👨🏙️', answer: 'Spider-Man' },
-      { q: '🦖🏝️', answer: 'Jurassic Park' },
-      { q: '👨‍💼📄🏢', answer: 'The Office' },
-      { q: '🧪👨‍🔬💰', answer: 'Breaking Bad' },
-      { q: '📅😵‍💫📞', answer: 'Too many meetings' },
-      { q: '🔥🧯', answer: 'Putting out fires' }
+      { q: "🧙‍♂️💍🗻", a: "Lord of the Rings" },
+      { q: "🐠🔎🌊", a: "Finding Nemo" },
+      { q: "🚢🧊💔", a: "Titanic" },
+      { q: "🦁👑", a: "The Lion King" },
+      { q: "🦖🏝️", a: "Jurassic Park" },
+      { q: "👨‍💼📄🏢", a: "The Office" },
+      { q: "🧪👨‍🔬💰", a: "Breaking Bad" },
+      { q: "📅😵‍💫📞", a: "Too many meetings" },
+      { q: "🔥🧯", a: "Putting out fires" }
     ],
     superlatives: [
-      'Who is most likely to win trivia night?',
-      'Who is most likely to have the best snacks?',
-      'Who is most likely to recommend a great show?',
-      'Who is most likely to survive a zombie apocalypse?',
-      'Who is most likely to send the perfect GIF?',
-      'Who is most likely to have the best vacation tips?',
-      'Who is most likely to become a food critic?',
-      'Who is most likely to have 47 browser tabs open?'
+      { q: "Who is most likely to win trivia night?" },
+      { q: "Who is most likely to have the best snacks?" },
+      { q: "Who is most likely to recommend a great show?" },
+      { q: "Who is most likely to survive a zombie apocalypse?" },
+      { q: "Who is most likely to send the perfect GIF?" },
+      { q: "Who is most likely to become a food critic?" }
     ],
     final: [
-      { q: 'Final bonus: Name the movie/show from this emoji: 🧑‍🍳🐀🍝', answer: 'Ratatouille' },
-      { q: 'Final bonus: What show has the line “We were on a break”?', answer: 'Friends' },
-      { q: 'Final bonus: Name one person on your team who had the funniest answer today.', answer: 'Host choice' }
+      { q: "Final bonus: which team can guess the host’s favorite show/movie?", a: "Host decides" },
+      { q: "Final bonus: name one thing someone shared during intros.", a: "Host decides" },
+      { q: "Final bonus: what was the closest Majority Rules question tonight?", a: "Host decides" }
     ]
   };
 
-  function defaultState(){
+  const GAME_LABELS = {
+    idle: "Ready",
+    intros: "Fun Intros",
+    majority: "Majority Rules",
+    trivia: "Team Trivia",
+    emoji: "Guess the Emoji",
+    superlatives: "Superlatives",
+    final: "Final Bonus"
+  };
+
+  let db = null;
+  let rootRef = null;
+  let state = null;
+  let players = {};
+  let answers = {};
+  let teamAnswers = {};
+  let currentPlayerId = localStorage.getItem(STORAGE_KEY) || null;
+  let hostUnlocked = localStorage.getItem(HOST_KEY) === "true";
+  let modal = null;
+  let toastTimer = null;
+  let renderTimer = null;
+
+  document.addEventListener("DOMContentLoaded", boot);
+
+  async function boot() {
+    try {
+      if (!isConfigReady(CONFIG.firebase)) {
+        renderSetupMissing();
+        return;
+      }
+      if (!window.firebase || !window.firebase.database) {
+        renderFatal("Firebase scripts did not load. Check your internet connection or CDN access.");
+        return;
+      }
+      window.firebase.initializeApp(CONFIG.firebase);
+      db = window.firebase.database();
+      rootRef = db.ref(`events/${EVENT_ID}`);
+      await ensureEventState();
+      attachRealtimeListeners();
+      attachEventHandlers();
+      renderTimer = window.setInterval(() => render(), 1000);
+    } catch (err) {
+      console.error(err);
+      renderFatal(err.message || "The app could not start.");
+    }
+  }
+
+  function isConfigReady(firebaseConfig) {
+    if (!firebaseConfig) return false;
+    const required = ["apiKey", "authDomain", "databaseURL", "projectId", "appId"];
+    return required.every((key) => firebaseConfig[key] && !String(firebaseConfig[key]).includes("PASTE_"));
+  }
+
+  async function ensureEventState() {
+    const snap = await rootRef.child("state").once("value");
+    if (!snap.exists()) {
+      await rootRef.child("state").set(defaultState());
+    }
+  }
+
+  function attachRealtimeListeners() {
+    rootRef.child("state").on("value", (snap) => { state = snap.val() || defaultState(); render(); });
+    rootRef.child("players").on("value", (snap) => { players = snap.val() || {}; render(); });
+    rootRef.child("answers").on("value", (snap) => { answers = snap.val() || {}; render(); });
+    rootRef.child("teamAnswers").on("value", (snap) => { teamAnswers = snap.val() || {}; render(); });
+  }
+
+  function attachEventHandlers() {
+    document.addEventListener("submit", async (event) => {
+      const form = event.target.closest("form[data-action]");
+      if (!form) return;
+      event.preventDefault();
+      await handleAction(form.dataset.action, form);
+    });
+
+    document.addEventListener("click", async (event) => {
+      const el = event.target.closest("[data-action]");
+      if (!el || el.tagName === "FORM") return;
+      event.preventDefault();
+      await handleAction(el.dataset.action, el);
+    });
+  }
+
+  async function handleAction(action, el) {
+    try {
+      switch (action) {
+        case "saveProfile": return saveProfile(el);
+        case "selectTeam": return selectTeam(el.dataset.team);
+        case "openHost": modal = "host"; return render();
+        case "closeModal": modal = null; return render();
+        case "unlockHost": return unlockHost(el);
+        case "copyLink": return copyLink();
+        case "signOut": return signOut();
+        case "startGame": return startGame(el.dataset.game);
+        case "advancePhase": return advancePhase();
+        case "reveal": return setPhase("reveal");
+        case "nextQuestion": return nextQuestion();
+        case "submitMajorityAnswer": return submitMajority("answer", el.dataset.value);
+        case "submitMajorityPrediction": return submitMajority("prediction", el.dataset.value);
+        case "submitTeamAnswer": return submitTeamAnswer(el);
+        case "submitSuperVote": return submitSuperVote(el.dataset.player);
+        case "awardMajority": return awardMajorityPoints();
+        case "awardTeam": return awardTeam(el.dataset.team, Number(el.dataset.points || 0));
+        case "awardSuper": return awardSuperlative();
+        case "adjustScore": return adjustScore(el.dataset.team, Number(el.dataset.delta || 0));
+        case "resetRound": return resetRound();
+        case "resetEvent": return resetEvent();
+        case "updateTeamNames": return updateTeamNames(el);
+        case "nextIntro": return moveIntro(1);
+        case "prevIntro": return moveIntro(-1);
+        case "startTimer": return startTimer(Number(el.dataset.seconds || 45));
+        case "confetti": return confetti();
+        default: return null;
+      }
+    } catch (err) {
+      console.error(err);
+      toast(err.message || "Something went wrong.");
+    }
+  }
+
+  function defaultState() {
+    const now = Date.now();
     return {
+      initializedAt: now,
+      updatedAt: now,
       teams: {
-        red: { name: 'Team Salsa', score: 0, color: 'pink' },
-        blue: { name: 'Team Spark', score: 0, color: 'blue' },
-        green: { name: 'Team Guac', score: 0, color: 'green' }
+        A: { name: "Team Navy", score: 0 },
+        B: { name: "Team Blue", score: 0 },
+        C: { name: "Team Spark", score: 0 }
       },
-      players: {},
-      game: { type: 'lobby', phase: 'idle', index: 0, locked: false, revealed: false },
-      majority: { answers: {}, predictions: {}, scoredKey: '' },
-      teamAnswers: {},
-      votes: {},
-      custom: { question: '', answer: '' },
-      updatedAt: Date.now()
+      current: {
+        type: "idle",
+        phase: "idle",
+        index: 0,
+        roundId: newRoundId(),
+        awarded: false,
+        timerEnd: null,
+        introOrder: [],
+        introIndex: 0
+      }
     };
   }
 
-  const $ = (sel) => document.querySelector(sel);
-  const app = $('#app');
-  const toastEl = $('#toast');
-  let state = defaultState();
-  let store = null;
-  let playerId = localStorage.getItem(PLAYER_KEY) || makeId();
-  localStorage.setItem(PLAYER_KEY, playerId);
-  let hostUnlocked = localStorage.getItem(HOST_KEY) === '1';
-  let soundOn = localStorage.getItem(SOUND_KEY) === '1';
-  let adminHidden = false;
+  function currentPlayer() {
+    return currentPlayerId ? players[currentPlayerId] : null;
+  }
 
-  async function init(){
-    store = createStore();
-    await store.init();
-    store.subscribe((next) => {
-      state = normalizeState(next);
-      render();
+  function allPlayers() {
+    return Object.entries(players || {})
+      .filter(([, p]) => p && p.name)
+      .map(([id, p]) => ({ id, ...p }))
+      .sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0));
+  }
+
+  function playerTeam() {
+    const p = currentPlayer();
+    return p && p.team ? p.team : null;
+  }
+
+  function currentAnswers() {
+    return answers?.[state?.current?.roundId] || {};
+  }
+
+  function currentTeamAnswers() {
+    return teamAnswers?.[state?.current?.roundId] || {};
+  }
+
+  function getQuestion() {
+    const type = state?.current?.type || "idle";
+    const bank = QUESTIONS[type] || [];
+    return bank[state?.current?.index || 0] || bank[0] || null;
+  }
+
+  function render() {
+    if (!state) return;
+    const p = currentPlayer();
+    const view = !p?.name ? "join" : !p?.team ? "team" : "play";
+    $app.innerHTML = `
+      ${renderHeader(view)}
+      <main class="page">
+        ${renderProgress(view)}
+        ${view === "join" ? renderJoin() : view === "team" ? renderTeamSelect() : renderPlay()}
+        ${hostUnlocked ? renderHostDock() : ""}
+      </main>
+      ${modal === "host" ? renderHostModal() : ""}
+    `;
+  }
+
+  function renderHeader(view) {
+    const p = currentPlayer();
+    const team = p?.team ? state.teams[p.team]?.name : "No team yet";
+    const count = allPlayers().length;
+    return `
+      <header class="header">
+        <div class="header-inner">
+          <div class="brand">
+            <div class="logo" aria-hidden="true">🎯</div>
+            <div>
+              <div class="brand-title">Team Happy Hour</div>
+              <div class="brand-subtitle">${p?.name ? `${escapeHTML(p.name)} · ${escapeHTML(team)}` : "Name → Team → Play"}</div>
+            </div>
+          </div>
+          <div class="header-actions">
+            <span class="pill pill-live">● Firebase live</span>
+            <span class="pill">${count} joined</span>
+            <span class="pill">${escapeHTML(GAME_LABELS[state.current.type] || "Ready")}</span>
+            <button class="btn" data-action="copyLink">Copy link</button>
+            <button class="btn ${hostUnlocked ? "btn-primary" : ""}" data-action="openHost">Host</button>
+          </div>
+        </div>
+      </header>
+    `;
+  }
+
+  function renderProgress(view) {
+    const active = { join: 0, team: 1, play: 2 }[view];
+    const labels = ["Add name", "Select team", "Play games"];
+    return `
+      <section class="progress-strip" aria-label="Game setup progress">
+        ${labels.map((label, index) => `
+          <div class="step-chip ${index === active ? "active" : ""}">
+            <strong>${String(index + 1).padStart(2, "0")} ${label}</strong>
+            <span>${index < active ? "Complete" : index === active ? "Now" : "Next"}</span>
+          </div>
+        `).join("")}
+      </section>
+    `;
+  }
+
+  function renderJoin() {
+    const p = currentPlayer() || {};
+    return `
+      <section class="hero">
+        <div>
+          <div class="kicker">Happy hour game board</div>
+          <h1 class="h1">Start simple. Play fast.</h1>
+          <p class="lead">Add your name, pick a team, and answer from your own device. The host controls the games and the shared screen keeps score.</p>
+          <form class="card card-pad form-grid" data-action="saveProfile" style="max-width: 680px; margin-top: 32px;">
+            <div class="field">
+              <label class="label" for="name">Your name</label>
+              <input id="name" name="name" class="input" required maxlength="40" autocomplete="name" placeholder="e.g., Ghassan" value="${escapeAttr(p.name || "")}" />
+            </div>
+            <div class="field">
+              <label class="label" for="avatar">Avatar</label>
+              <select id="avatar" name="avatar" class="select">
+                ${AVATARS.map(a => `<option value="${a}" ${p.avatar === a ? "selected" : ""}>${a}</option>`).join("")}
+              </select>
+            </div>
+            <div class="field">
+              <label class="label" for="show">Favorite show / comfort rewatch</label>
+              <input id="show" name="show" class="input" maxlength="80" placeholder="Optional, but useful for intros" value="${escapeAttr(p.show || "")}" />
+            </div>
+            <div class="field">
+              <label class="label" for="fact">One fun fact or harmless hot take</label>
+              <textarea id="fact" name="fact" class="textarea" maxlength="180" placeholder="Optional — the host can use this for the final bonus.">${escapeHTML(p.fact || "")}</textarea>
+            </div>
+            <button class="btn btn-primary btn-large" type="submit">Continue to teams</button>
+          </form>
+        </div>
+        <aside class="hero-panel">
+          <div>
+            <div class="kicker" style="color: rgba(255,255,255,.72);">Tonight</div>
+            <div class="metric">18</div>
+            <p>People, three teams, quick rounds, one live scoreboard.</p>
+          </div>
+          <span class="pill pill-dark">Majority + Trivia + Emoji + Superlatives</span>
+        </aside>
+      </section>
+    `;
+  }
+
+  function renderTeamSelect() {
+    const p = currentPlayer();
+    return `
+      <section>
+        <div class="kicker">Team select</div>
+        <h1 class="h1">Choose your team.</h1>
+        <p class="lead">Pick any team. The host can balance teams if needed.</p>
+        <div class="teams-grid">
+          ${TEAM_IDS.map(teamId => renderTeamCard(teamId, p?.team === teamId, true)).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderTeamCard(teamId, selected = false, choose = false) {
+    const team = state.teams[teamId];
+    const members = allPlayers().filter(p => p.team === teamId);
+    return `
+      <article class="team-card ${selected ? "selected" : ""}">
+        <div class="team-head">
+          <div>
+            <h2 class="team-name">${escapeHTML(team.name)}</h2>
+            <span class="pill">${members.length} players</span>
+          </div>
+          <div class="team-score">${Number(team.score || 0)}</div>
+        </div>
+        <div class="member-list" aria-label="${escapeAttr(team.name)} members">
+          ${members.length ? members.map(memberToken).join("") : `<span class="help">No one yet.</span>`}
+        </div>
+        ${choose ? `<button class="btn ${selected ? "btn-success" : "btn-primary"} btn-block" data-action="selectTeam" data-team="${teamId}">${selected ? "Selected" : `Join ${escapeHTML(team.name)}`}</button>` : ""}
+      </article>
+    `;
+  }
+
+  function renderPlay() {
+    return `
+      <section class="game-layout">
+        <div>${renderCurrentGame()}</div>
+        <aside class="side-panel">
+          ${renderScoreboard()}
+          ${renderContext()}
+        </aside>
+      </section>
+    `;
+  }
+
+  function renderCurrentGame() {
+    const type = state.current.type;
+    if (type === "idle") return renderIdleGame();
+    if (type === "intros") return renderIntros();
+    if (type === "majority") return renderMajority();
+    if (type === "trivia" || type === "emoji" || type === "final") return renderTeamQuestion(type);
+    if (type === "superlatives") return renderSuperlatives();
+    return renderIdleGame();
+  }
+
+  function renderIdleGame() {
+    return `
+      <div class="game-card">
+        <div class="game-top">
+          <h2 class="game-title">Ready to play</h2>
+          <span class="pill">Waiting for host</span>
+        </div>
+        <div class="game-body">
+          <h3 class="question">You’re in. The host will start the first game.</h3>
+          <p class="lead">Keep this page open while the host screen-shares the game board.</p>
+        </div>
+        <div class="game-footer">
+          <span class="help">Current team: ${escapeHTML(state.teams[playerTeam()]?.name || "—")}</span>
+          <button class="btn" data-action="signOut">Change name/team</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderIntros() {
+    const order = state.current.introOrder || [];
+    const index = Math.min(state.current.introIndex || 0, Math.max(order.length - 1, 0));
+    const person = players[order[index]] || null;
+    const remaining = timerRemaining();
+    return `
+      <div class="game-card">
+        <div class="game-top">
+          <h2 class="game-title">Fun Intros</h2>
+          <span class="pill">${order.length ? `${index + 1} / ${order.length}` : "No players"}</span>
+        </div>
+        <div class="game-body">
+          ${person ? `
+            <div class="kicker">Up next</div>
+            <h3 class="question">${escapeHTML(person.avatar || "✨")} ${escapeHTML(person.name)}</h3>
+            <div class="stats-grid">
+              <div class="stat"><b>${remaining || 45}</b><span>seconds</span></div>
+              <div class="stat"><b>${escapeHTML(person.show ? "✓" : "—")}</b><span>favorite show</span></div>
+              <div class="stat"><b>${escapeHTML(person.fact ? "✓" : "—")}</b><span>fun fact</span></div>
+            </div>
+            ${person.show ? `<div class="submitted-state">Favorite show: ${escapeHTML(person.show)}</div>` : ""}
+            ${person.fact ? `<div class="submitted-state">Fun fact: ${escapeHTML(person.fact)}</div>` : ""}
+          ` : `
+            <h3 class="question">No one has joined yet.</h3>
+          `}
+        </div>
+        <div class="game-footer">
+          <span class="help">45 seconds per person keeps intros moving.</span>
+          ${hostUnlocked ? `<div class="controls"><button class="btn" data-action="prevIntro">Previous</button><button class="btn btn-primary" data-action="startTimer" data-seconds="45">Start 45s</button><button class="btn" data-action="nextIntro">Next</button></div>` : ""}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderMajority() {
+    const q = getQuestion();
+    const phase = state.current.phase;
+    const my = currentAnswers()[currentPlayerId] || {};
+    const playerCount = allPlayers().length;
+    const answeredCount = Object.values(currentAnswers()).filter(a => a.answer).length;
+    const predictedCount = Object.values(currentAnswers()).filter(a => a.prediction).length;
+    return `
+      <div class="game-card">
+        <div class="game-top">
+          <h2 class="game-title">Majority Rules</h2>
+          <span class="pill">${phase === "answer" ? `${answeredCount}/${playerCount} answered` : phase === "predict" ? `${predictedCount}/${playerCount} predicted` : "Reveal"}</span>
+        </div>
+        <div class="game-body">
+          ${phase === "answer" ? renderMajorityAnswer(q, my) : phase === "predict" ? renderMajorityPredict(q, my) : renderMajorityReveal(q)}
+        </div>
+        <div class="game-footer">
+          <span class="help">Question ${state.current.index + 1} of ${QUESTIONS.majority.length}</span>
+          ${hostUnlocked ? hostPhaseButtons() : ""}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderMajorityAnswer(q, my) {
+    if (my.answer) {
+      return `<h3 class="question">${escapeHTML(q.q)}</h3><div class="submitted-state">Locked in: ${escapeHTML(my.answer)}. Next, you’ll predict what the group picked.</div>`;
+    }
+    return `
+      <div class="kicker">Answer honestly</div>
+      <h3 class="question">${escapeHTML(q.q)}</h3>
+      <div class="answer-grid">
+        ${q.options.map(opt => `<button class="answer-option" data-action="submitMajorityAnswer" data-value="${escapeAttr(opt)}">${escapeHTML(opt)}</button>`).join("")}
+      </div>
+    `;
+  }
+
+  function renderMajorityPredict(q, my) {
+    if (my.prediction) {
+      return `<h3 class="question">${escapeHTML(q.q)}</h3><div class="submitted-state">Prediction locked: most people picked ${escapeHTML(my.prediction)}.</div>`;
+    }
+    return `
+      <div class="kicker">Predict the group</div>
+      <h3 class="question">What did most people pick?</h3>
+      <div class="answer-grid">
+        ${q.options.map(opt => `<button class="answer-option" data-action="submitMajorityPrediction" data-value="${escapeAttr(opt)}">${escapeHTML(opt)}</button>`).join("")}
+      </div>
+    `;
+  }
+
+  function renderMajorityReveal(q) {
+    const summary = majoritySummary(q);
+    return `
+      <div class="kicker">Reveal</div>
+      <h3 class="question">Majority: ${escapeHTML(summary.majority || "No answers yet")}</h3>
+      <div class="result-bars">
+        ${q.options.map(opt => `
+          <div class="result-bar">
+            <div class="result-label"><span>${escapeHTML(opt)}</span><span>${summary.counts[opt] || 0}</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:${summary.percent[opt] || 0}%"></div></div>
+          </div>
+        `).join("")}
+      </div>
+      <div class="stats-grid">
+        ${TEAM_IDS.map(teamId => `<div class="stat"><b>${summary.correctByTeam[teamId] || 0}</b><span>${escapeHTML(state.teams[teamId].name)} correct</span></div>`).join("")}
+      </div>
+      ${state.current.awarded ? `<div class="submitted-state">Points awarded.</div>` : hostUnlocked ? `<button class="btn btn-primary btn-large" data-action="awardMajority">Award majority points</button>` : ""}
+    `;
+  }
+
+  function renderTeamQuestion(type) {
+    const q = getQuestion();
+    const phase = state.current.phase;
+    const teamId = playerTeam();
+    const teamMap = currentTeamAnswers();
+    const mine = teamId ? teamMap[teamId] : null;
+    const isEmoji = type === "emoji";
+    const points = type === "final" ? 5 : 2;
+    return `
+      <div class="game-card">
+        <div class="game-top">
+          <h2 class="game-title">${escapeHTML(GAME_LABELS[type])}</h2>
+          <span class="pill">${Object.keys(teamMap).length}/3 teams submitted</span>
+        </div>
+        <div class="game-body">
+          <div class="kicker">Team answer · ${points} points</div>
+          <h3 class="question ${isEmoji ? "emoji-question" : ""}">${escapeHTML(q.q)}</h3>
+          ${phase === "reveal" ? renderTeamReveal(q, points) : renderTeamAnswerForm(mine)}
+        </div>
+        <div class="game-footer">
+          <span class="help">One answer per team. Last submission before reveal counts.</span>
+          ${hostUnlocked ? hostPhaseButtons() : ""}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderTeamAnswerForm(mine) {
+    return `
+      ${mine?.answer ? `<div class="submitted-state">Your team submitted: ${escapeHTML(mine.answer)}</div>` : ""}
+      <form class="form-grid" data-action="submitTeamAnswer">
+        <div class="field">
+          <label class="label" for="teamAnswer">Team answer</label>
+          <input id="teamAnswer" name="answer" class="input" maxlength="80" placeholder="Type your team’s final answer" value="${escapeAttr(mine?.answer || "")}" required />
+        </div>
+        <button class="btn btn-primary btn-large" type="submit">Submit team answer</button>
+      </form>
+    `;
+  }
+
+  function renderTeamReveal(q, points) {
+    const teamMap = currentTeamAnswers();
+    return `
+      <div class="submitted-state">Correct answer: ${escapeHTML(q.a || "Host decides")}</div>
+      <div class="answer-list">
+        ${TEAM_IDS.map(teamId => {
+          const item = teamMap[teamId];
+          return `<div class="answer-line"><div><b>${escapeHTML(state.teams[teamId].name)}</b><br><span>${escapeHTML(item?.answer || "No answer")}</span></div>${hostUnlocked ? `<button class="btn btn-success" data-action="awardTeam" data-team="${teamId}" data-points="${points}">+${points}</button>` : ""}</div>`;
+        }).join("")}
+      </div>
+    `;
+  }
+
+  function renderSuperlatives() {
+    const q = getQuestion();
+    const phase = state.current.phase;
+    const my = currentAnswers()[currentPlayerId] || {};
+    const people = allPlayers();
+    const count = Object.values(currentAnswers()).filter(a => a.vote).length;
+    return `
+      <div class="game-card">
+        <div class="game-top">
+          <h2 class="game-title">Superlatives</h2>
+          <span class="pill">${count}/${people.length} voted</span>
+        </div>
+        <div class="game-body">
+          ${phase === "reveal" ? renderSuperReveal(q) : `
+            <div class="kicker">Vote for someone</div>
+            <h3 class="question">${escapeHTML(q.q)}</h3>
+            ${my.vote ? `<div class="submitted-state">Vote locked for ${escapeHTML(players[my.vote]?.name || "someone")}.</div>` : `<div class="answer-grid">${people.map(p => `<button class="answer-option" data-action="submitSuperVote" data-player="${p.id}">${escapeHTML(p.avatar || "✨")} ${escapeHTML(p.name)}</button>`).join("")}</div>`}
+          `}
+        </div>
+        <div class="game-footer">
+          <span class="help">Keep it fun and positive.</span>
+          ${hostUnlocked ? hostPhaseButtons() : ""}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderSuperReveal(q) {
+    const summary = superSummary();
+    return `
+      <div class="kicker">Winner</div>
+      <h3 class="question">${summary.winner ? `${escapeHTML(players[summary.winner]?.avatar || "✨")} ${escapeHTML(players[summary.winner]?.name || "Winner")}` : "No votes yet"}</h3>
+      <p class="lead">${escapeHTML(q.q)}</p>
+      <div class="answer-list">
+        ${summary.ranked.map(([id, count]) => `<div class="answer-line"><b>${escapeHTML(players[id]?.name || "Unknown")}</b><span>${count} votes</span></div>`).join("") || `<div class="answer-line"><b>No votes</b><span>—</span></div>`}
+      </div>
+      ${state.current.awarded ? `<div class="submitted-state">Points awarded.</div>` : hostUnlocked && summary.winner ? `<button class="btn btn-primary btn-large" data-action="awardSuper">Award winner’s team +2</button>` : ""}
+    `;
+  }
+
+  function renderScoreboard() {
+    return `
+      <section class="scoreboard" aria-label="Scoreboard">
+        ${TEAM_IDS.map(teamId => `
+          <div class="score-row">
+            <strong>${escapeHTML(state.teams[teamId].name)}</strong>
+            <span>${Number(state.teams[teamId].score || 0)}</span>
+          </div>
+        `).join("")}
+      </section>
+    `;
+  }
+
+  function renderContext() {
+    const type = state.current.type;
+    const phase = state.current.phase;
+    const q = getQuestion();
+    const playerCount = allPlayers().length;
+    return `
+      <section class="context-card">
+        <h3>What’s happening</h3>
+        <p>${contextCopy(type, phase)}</p>
+      </section>
+      <section class="context-card">
+        <h3>Current round</h3>
+        <p>${q ? escapeHTML(q.q) : "The host has not started a game yet."}</p>
+        <div style="margin-top: 16px;"><span class="pill">${playerCount} players</span> <span class="pill">${escapeHTML(phase)}</span></div>
+      </section>
+    `;
+  }
+
+  function contextCopy(type, phase) {
+    if (type === "idle") return "Waiting for the host to start the first game.";
+    if (type === "intros") return "The host is moving through intros one person at a time.";
+    if (type === "majority" && phase === "answer") return "Answer honestly first. Results stay hidden until everyone predicts the majority.";
+    if (type === "majority" && phase === "predict") return "Now predict what the group picked. Correct predictions earn team points.";
+    if (type === "majority") return "The actual majority and correct predictors are visible.";
+    if (phase === "reveal") return "The host decides which teams get points and moves to the next question.";
+    return "Discuss with your team and submit one final answer.";
+  }
+
+  function renderHostModal() {
+    return `
+      <div class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="hostTitle">
+        <div class="modal">
+          <h2 id="hostTitle">Host access</h2>
+          <p>Unlock game controls for this browser.</p>
+          <form class="form-grid" data-action="unlockHost">
+            <div class="field">
+              <label class="label" for="hostPassword">Password</label>
+              <input id="hostPassword" name="password" type="password" class="input" autocomplete="current-password" required />
+            </div>
+            <div class="controls">
+              <button class="btn btn-primary" type="submit">Unlock host controls</button>
+              <button class="btn" data-action="closeModal">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderHostDock() {
+    return `
+      <section class="host-dock" aria-label="Host controls">
+        <div class="host-head">
+          <h2>Host controls</h2>
+          <div class="controls"><button class="btn btn-ghost pill-dark" data-action="confetti">Confetti</button><button class="btn btn-ghost pill-dark" data-action="resetRound">Reset round</button></div>
+        </div>
+        <div class="host-body">
+          <div class="host-section">
+            <h3>Start a game</h3>
+            <div class="control-grid">
+              ${["intros", "majority", "trivia", "emoji", "superlatives", "final"].map(type => `<button class="btn ${state.current.type === type ? "btn-primary" : ""}" data-action="startGame" data-game="${type}">${escapeHTML(GAME_LABELS[type])}</button>`).join("")}
+            </div>
+          </div>
+          <div class="host-section">
+            <h3>Round controls</h3>
+            <div class="controls">
+              ${hostPhaseButtons()}
+              <button class="btn" data-action="nextQuestion">Next question</button>
+              <button class="btn" data-action="startTimer" data-seconds="60">Start 60s</button>
+            </div>
+          </div>
+          <div class="host-section">
+            <h3>Scores</h3>
+            <div class="control-grid">
+              ${TEAM_IDS.map(teamId => `
+                <div class="card card-pad">
+                  <strong style="color:var(--tz-color-primary)">${escapeHTML(state.teams[teamId].name)}</strong>
+                  <div class="controls" style="margin-top:10px"><button class="btn" data-action="adjustScore" data-team="${teamId}" data-delta="-1">−1</button><button class="btn" data-action="adjustScore" data-team="${teamId}" data-delta="1">+1</button><button class="btn" data-action="adjustScore" data-team="${teamId}" data-delta="5">+5</button></div>
+                </div>`).join("")}
+            </div>
+          </div>
+          <div class="host-section">
+            <h3>Team names</h3>
+            <form class="control-grid" data-action="updateTeamNames">
+              ${TEAM_IDS.map(teamId => `<input class="small-input" name="team_${teamId}" value="${escapeAttr(state.teams[teamId].name)}" aria-label="Team ${teamId} name" />`).join("")}
+              <button class="btn btn-primary" type="submit">Save team names</button>
+            </form>
+          </div>
+          <div class="host-section">
+            <h3>Danger zone</h3>
+            <button class="btn btn-danger" data-action="resetEvent">Reset entire event</button>
+          </div>
+        </div>
+      </section>
+    `;
+  }
+
+  function hostPhaseButtons() {
+    const type = state.current.type;
+    if (type === "idle") return "";
+    if (type === "intros") {
+      return `<div class="controls"><button class="btn" data-action="prevIntro">Previous intro</button><button class="btn btn-primary" data-action="startTimer" data-seconds="45">Start 45s</button><button class="btn" data-action="nextIntro">Next intro</button></div>`;
+    }
+    if (type === "majority") {
+      if (state.current.phase === "answer") return `<button class="btn btn-primary" data-action="advancePhase">Start predictions</button>`;
+      if (state.current.phase === "predict") return `<button class="btn btn-primary" data-action="reveal">Reveal results</button>`;
+      return `<button class="btn btn-primary" data-action="nextQuestion">Next question</button>`;
+    }
+    if (state.current.phase !== "reveal") return `<button class="btn btn-primary" data-action="reveal">Reveal answer</button>`;
+    return `<button class="btn btn-primary" data-action="nextQuestion">Next question</button>`;
+  }
+
+  async function saveProfile(form) {
+    const fd = new FormData(form);
+    const name = String(fd.get("name") || "").trim();
+    if (!name) throw new Error("Add your name first.");
+    if (!currentPlayerId) {
+      currentPlayerId = `p_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+      localStorage.setItem(STORAGE_KEY, currentPlayerId);
+    }
+    const existing = players[currentPlayerId] || {};
+    await rootRef.child(`players/${currentPlayerId}`).update({
+      name,
+      avatar: String(fd.get("avatar") || "✨"),
+      show: String(fd.get("show") || "").trim(),
+      fact: String(fd.get("fact") || "").trim(),
+      team: existing.team || null,
+      joinedAt: existing.joinedAt || Date.now(),
+      updatedAt: Date.now(),
+      active: true
     });
-    bindChrome();
+    toast("Profile saved.");
+  }
+
+  async function selectTeam(teamId) {
+    requirePlayer();
+    if (!TEAM_IDS.includes(teamId)) throw new Error("Choose a valid team.");
+    await rootRef.child(`players/${currentPlayerId}`).update({ team: teamId, updatedAt: Date.now() });
+    toast(`Joined ${state.teams[teamId].name}.`);
+  }
+
+  async function unlockHost(form) {
+    const password = String(new FormData(form).get("password") || "");
+    const hash = await sha256(password);
+    if (hash !== CONFIG.hostPasswordHash) throw new Error("Incorrect host password.");
+    hostUnlocked = true;
+    localStorage.setItem(HOST_KEY, "true");
+    modal = null;
+    toast("Host controls unlocked.");
     render();
   }
 
-  function createStore(){
-    const cfg = window.HHA_FIREBASE_CONFIG;
-    const hasFirebase = cfg && cfg.databaseURL && window.firebase && window.firebase.database;
-    if (hasFirebase) return new FirebaseStore(cfg);
-    return new LocalStore();
-  }
-
-  class FirebaseStore {
-    constructor(config){
-      this.app = window.firebase.apps.length ? window.firebase.app() : window.firebase.initializeApp(config);
-      this.db = window.firebase.database();
-      this.root = this.db.ref(DATA_ROOT);
-      $('#modeLabel').textContent = 'Live mode';
-    }
-    async init(){
-      const snap = await this.root.get();
-      if (!snap.exists()) await this.root.set(defaultState());
-    }
-    subscribe(cb){ this.root.on('value', (snap) => cb(snap.val() || defaultState())); }
-    update(path, value){ return this.root.child(path).set(value); }
-    updateMany(updates){ updates.updatedAt = Date.now(); return this.root.update(updates); }
-    reset(){ return this.root.set(defaultState()); }
-  }
-
-  class LocalStore {
-    constructor(){
-      this.key = DATA_ROOT;
-      $('#modeLabel').textContent = 'Local demo mode';
-      window.addEventListener('storage', (e) => {
-        if (e.key === this.key && this.cb) this.cb(this.read());
-      });
-    }
-    async init(){ if (!localStorage.getItem(this.key)) this.write(defaultState()); }
-    subscribe(cb){ this.cb = cb; cb(this.read()); }
-    update(path, value){
-      const s = this.read();
-      setByPath(s, path.split('/'), value);
-      s.updatedAt = Date.now();
-      this.write(s);
-      if (this.cb) this.cb(s);
-    }
-    updateMany(updates){
-      const s = this.read();
-      Object.entries(updates).forEach(([path, value]) => setByPath(s, path.split('/'), value));
-      s.updatedAt = Date.now();
-      this.write(s);
-      if (this.cb) this.cb(s);
-    }
-    reset(){ const s = defaultState(); this.write(s); if (this.cb) this.cb(s); }
-    read(){ try { return JSON.parse(localStorage.getItem(this.key)) || defaultState(); } catch { return defaultState(); } }
-    write(s){ localStorage.setItem(this.key, JSON.stringify(s)); }
-  }
-
-  function normalizeState(s){
-    const d = defaultState();
-    return {
-      ...d,
-      ...s,
-      teams: { ...d.teams, ...(s.teams || {}) },
-      players: s.players || {},
-      game: { ...d.game, ...(s.game || {}) },
-      majority: { ...d.majority, ...(s.majority || {}) },
-      teamAnswers: s.teamAnswers || {},
-      votes: s.votes || {},
-      custom: { ...d.custom, ...(s.custom || {}) }
+  async function startGame(type) {
+    requireHost();
+    const roundId = newRoundId();
+    const next = {
+      type,
+      phase: type === "intros" ? "present" : "answer",
+      index: 0,
+      roundId,
+      awarded: false,
+      timerEnd: null,
+      introOrder: type === "intros" ? shuffle(allPlayers().map(p => p.id)) : [],
+      introIndex: 0
     };
+    await rootRef.child("state/current").set(next);
+    await rootRef.child(`answers/${roundId}`).remove();
+    await rootRef.child(`teamAnswers/${roundId}`).remove();
+    toast(`${GAME_LABELS[type]} started.`);
   }
 
-  function bindChrome(){
-    $('#hostBtn').addEventListener('click', () => {
-      if (hostUnlocked) { adminHidden = !adminHidden; document.body.classList.toggle('hide-admin', adminHidden); $('#showAdminBtn').classList.toggle('hidden', !adminHidden); return; }
-      $('#hostModal').classList.remove('hidden');
-      $('#hostPassword').focus();
+  async function advancePhase() {
+    requireHost();
+    const type = state.current.type;
+    if (type === "majority" && state.current.phase === "answer") return setPhase("predict");
+    return setPhase("reveal");
+  }
+
+  async function setPhase(phase) {
+    requireHost();
+    await rootRef.child("state/current").update({ phase, timerEnd: null, updatedAt: Date.now() });
+  }
+
+  async function nextQuestion() {
+    requireHost();
+    const type = state.current.type;
+    if (type === "intros") return moveIntro(1);
+    const bank = QUESTIONS[type] || [];
+    const nextIndex = ((state.current.index || 0) + 1) % Math.max(bank.length, 1);
+    const roundId = newRoundId();
+    await rootRef.child("state/current").update({
+      index: nextIndex,
+      roundId,
+      phase: "answer",
+      awarded: false,
+      timerEnd: null,
+      updatedAt: Date.now()
     });
-    $('#showAdminBtn').addEventListener('click', () => { adminHidden = false; document.body.classList.remove('hide-admin'); $('#showAdminBtn').classList.add('hidden'); });
-    $('#cancelHostBtn').addEventListener('click', () => $('#hostModal').classList.add('hidden'));
-    $('#unlockHostBtn').addEventListener('click', unlockHost);
-    $('#hostPassword').addEventListener('keydown', (e) => { if (e.key === 'Enter') unlockHost(); });
-    $('#copyLinkBtn').addEventListener('click', async () => { await navigator.clipboard.writeText(location.href.split('#')[0]); toast('Link copied'); });
-    $('#soundBtn').addEventListener('click', () => { soundOn = !soundOn; localStorage.setItem(SOUND_KEY, soundOn ? '1' : '0'); $('#soundBtn').textContent = `Sound: ${soundOn ? 'On' : 'Off'}`; beep(); });
-    $('#soundBtn').textContent = `Sound: ${soundOn ? 'On' : 'Off'}`;
+    await rootRef.child(`answers/${roundId}`).remove();
+    await rootRef.child(`teamAnswers/${roundId}`).remove();
   }
 
-  function unlockHost(){
-    if ($('#hostPassword').value === HOST_PASSWORD) {
-      hostUnlocked = true;
-      localStorage.setItem(HOST_KEY, '1');
-      $('#hostModal').classList.add('hidden');
-      $('#hostBtn').textContent = 'Hide Host';
-      render();
-    } else toast('Wrong password');
-  }
-
-  function render(){
-    $('#hostBtn').textContent = hostUnlocked ? (adminHidden ? 'Show Host' : 'Hide Host') : 'Host';
-    const me = state.players[playerId];
-    if (!me) return renderName();
-    if (!me.team) return renderTeamSelect(me);
-    renderGame(me);
-    if (hostUnlocked) renderHostPanel();
-  }
-
-  function renderName(){
-    app.innerHTML = `
-      <section class="hero card">
-        <div style="font-size:54px">🎊</div>
-        <h2>Ready to play?</h2>
-        <p>Enter your name. Then pick a team. That’s it.</p>
-        <div class="row" style="margin-top:22px">
-          <input class="big-input" id="nameInput" maxlength="28" placeholder="Your name" />
-          <button class="primary-btn" id="nameNext">Next</button>
-        </div>
-      </section>`;
-    $('#nameNext').addEventListener('click', saveName);
-    $('#nameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') saveName(); });
-  }
-
-  function saveName(){
-    const name = $('#nameInput').value.trim();
-    if (!name) return toast('Add your name first');
-    const emoji = emojis[Math.floor(Math.random()*emojis.length)];
-    store.update(`players/${playerId}`, { id: playerId, name, emoji, team: '', joinedAt: Date.now() });
-  }
-
-  function renderTeamSelect(me){
-    const counts = teamCounts();
-    app.innerHTML = `
-      <section class="card">
-        <div class="game-title"><div><h2>Pick your team</h2><p class="muted">Hi ${esc(me.name)} — choose one team and you’re in.</p></div></div>
-        <div class="grid teams">
-          ${Object.entries(state.teams).map(([id,t]) => `
-            <button class="team-btn" data-team="${id}">
-              <strong>${esc(t.name)}</strong>
-              <span>${counts[id] || 0} players</span>
-            </button>`).join('')}
-        </div>
-      </section>`;
-    app.querySelectorAll('[data-team]').forEach(btn => btn.addEventListener('click', () => store.update(`players/${playerId}/team`, btn.dataset.team)));
-  }
-
-  function renderGame(me){
-    app.innerHTML = `
-      ${scoreboardHtml()}
-      ${gameHtml(me)}
-      ${hostUnlocked ? '<div id="hostMount"></div>' : ''}`;
-    bindGameEvents(me);
-  }
-
-  function scoreboardHtml(){
-    const counts = teamCounts();
-    return `<section class="grid scoreboard">
-      ${Object.entries(state.teams).map(([id,t]) => `
-        <div class="card team-card">
-          <h3>${esc(t.name)}</h3>
-          <div class="score">${t.score || 0}</div>
-          <div class="muted">${counts[id] || 0} players</div>
-          <div class="player-list">${teamPlayers(id).map(p => `<span class="chip ${p.id===playerId?'me':''}">${p.emoji || '🎈'} ${esc(p.name)}</span>`).join('') || '<span class="muted">No one yet</span>'}</div>
-        </div>`).join('')}
-    </section>`;
-  }
-
-  function gameHtml(me){
-    switch(state.game.type){
-      case 'majority': return majorityHtml(me);
-      case 'trivia': return teamAnswerHtml('Team Trivia', currentItem('trivia'), me, 2);
-      case 'emoji': return teamAnswerHtml('Guess the Emoji', currentItem('emoji'), me, 2, true);
-      case 'superlatives': return superlativesHtml(me);
-      case 'final': return teamAnswerHtml('Final Bonus', currentItem('final'), me, 5);
-      default: return lobbyHtml(me);
-    }
-  }
-
-  function lobbyHtml(me){
-    return `<section class="card hero" style="margin-top:18px">
-      <div style="font-size:58px">${me.emoji || '🎉'}</div>
-      <h2>You’re in.</h2>
-      <p>You’re on <strong>${esc(state.teams[me.team]?.name || 'a team')}</strong>. Wait for the host to start the first game.</p>
-      <button class="secondary-btn" id="changeTeam">Change team</button>
-    </section>`;
-  }
-
-  function majorityHtml(me){
-    const item = currentItem('majority');
-    const phase = state.game.phase;
-    const answers = state.majority.answers || {};
-    const predictions = state.majority.predictions || {};
-    const answered = answers[playerId];
-    const predicted = predictions[playerId];
-    if (phase === 'predict') {
-      return `<section class="card">
-        <div class="game-title"><h2>Majority Rules</h2><span class="pill">Step 2 of 2</span></div>
-        <p class="muted" style="text-align:center">Now guess what most people picked.</p>
-        <div class="question">${esc(item.q)}</div>
-        ${predicted ? `<div class="submitted">Prediction locked: ${esc(predicted)}</div>` : optionButtons(item.options, 'prediction')}
-      </section>`;
-    }
-    if (phase === 'reveal') {
-      return `<section class="card">
-        <div class="game-title"><h2>Majority Rules</h2><span class="pill green">Results</span></div>
-        <div class="question">${esc(item.q)}</div>
-        ${majorityResultsHtml(item)}
-      </section>`;
-    }
-    return `<section class="card">
-      <div class="game-title"><h2>Majority Rules</h2><span class="pill">Step 1 of 2</span></div>
-      <p class="muted" style="text-align:center">Answer honestly first. The results stay hidden.</p>
-      <div class="question">${esc(item.q)}</div>
-      ${answered ? `<div class="submitted">Answer locked: ${esc(answered)}</div>` : optionButtons(item.options, 'answer')}
-    </section>`;
-  }
-
-  function optionButtons(options, kind){
-    return `<div class="options">${options.map(o => `<button class="option" data-${kind}="${escAttr(o)}">${esc(o)}</button>`).join('')}</div>`;
-  }
-
-  function majorityResultsHtml(item){
-    const counts = Object.fromEntries(item.options.map(o => [o, 0]));
-    Object.values(state.majority.answers || {}).forEach(v => { if (counts[v] !== undefined) counts[v]++; });
-    const max = Math.max(1, ...Object.values(counts));
-    const majority = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]?.[0] || item.options[0];
-    const teamCorrect = { red:0, blue:0, green:0 };
-    Object.entries(state.majority.predictions || {}).forEach(([pid,pred]) => {
-      const p = state.players[pid];
-      if (p?.team && pred === majority) teamCorrect[p.team] = (teamCorrect[p.team] || 0) + 1;
+  async function resetRound() {
+    requireHost();
+    const roundId = newRoundId();
+    await rootRef.child("state/current").update({
+      roundId,
+      phase: state.current.type === "intros" ? "present" : "answer",
+      awarded: false,
+      timerEnd: null,
+      updatedAt: Date.now()
     });
-    return `
-      <div class="winner">Majority picked: ${esc(majority)}</div>
-      <div style="margin:18px 0">${Object.entries(counts).map(([opt,count]) => `
-        <div class="result-row"><strong>${esc(opt)}</strong><div class="bar"><div class="bar-fill" style="width:${Math.round((count/max)*100)}%"></div></div><strong>${count}</strong></div>`).join('')}</div>
-      <div class="grid teams">
-        ${Object.entries(state.teams).map(([id,t]) => `<div class="team-answer"><strong>${esc(t.name)}</strong><br><span class="muted">${teamCorrect[id] || 0} correct predictions</span></div>`).join('')}
-      </div>`;
+    toast("Round reset.");
   }
 
-  function teamAnswerHtml(title, item, me, points, emojiMode=false){
-    const phase = state.game.phase;
-    const teamId = me.team;
-    const submitted = state.teamAnswers?.[teamId]?.text || '';
-    const revealed = phase === 'reveal';
-    return `<section class="card">
-      <div class="game-title"><h2>${esc(title)}</h2><span class="pill">${points} pts</span></div>
-      <div class="question ${emojiMode ? 'emoji-question' : ''}">${esc(item.q)}</div>
-      ${!revealed ? `
-        <p class="muted" style="text-align:center">Discuss with your team. One answer per team.</p>
-        <div class="row">
-          <input class="answer-input" id="teamAnswerInput" placeholder="Type your team's answer" value="${escAttr(submitted)}" />
-          <button class="primary-btn" id="submitTeamAnswer">Submit</button>
-        </div>
-        ${submitted ? `<div class="submitted" style="margin-top:16px">${esc(state.teams[teamId]?.name)} submitted: ${esc(submitted)}</div>` : ''}
-      ` : `
-        <div class="winner">Correct answer: ${esc(item.answer)}</div>
-        <div style="margin-top:16px">${Object.entries(state.teams).map(([id,t]) => `<div class="team-answer"><strong>${esc(t.name)}</strong>: ${esc(state.teamAnswers?.[id]?.text || 'No answer')}</div>`).join('')}</div>
-      `}
-    </section>`;
-  }
-
-  function superlativesHtml(me){
-    const prompt = currentItem('superlatives');
-    const phase = state.game.phase;
-    const myVote = state.votes?.[playerId];
-    if (phase === 'reveal') {
-      const counts = {};
-      Object.values(state.votes || {}).forEach(pid => counts[pid] = (counts[pid] || 0) + 1);
-      const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
-      const winnerId = sorted[0]?.[0];
-      const winner = state.players[winnerId];
-      return `<section class="card">
-        <div class="game-title"><h2>Team Superlatives</h2><span class="pill green">Results</span></div>
-        <div class="question">${esc(prompt)}</div>
-        <div class="winner">${winner ? `${winner.emoji || '🎉'} ${esc(winner.name)}` : 'No votes yet'}</div>
-        <div style="margin-top:16px">${sorted.map(([pid,count]) => `<div class="team-answer"><strong>${esc(state.players[pid]?.name || 'Unknown')}</strong> — ${count} votes</div>`).join('') || '<p class="muted">No votes submitted.</p>'}</div>
-      </section>`;
-    }
-    const players = Object.values(state.players).filter(p => p.team);
-    return `<section class="card">
-      <div class="game-title"><h2>Team Superlatives</h2><span class="pill">Vote</span></div>
-      <div class="question">${esc(prompt)}</div>
-      ${myVote ? `<div class="submitted">Vote locked: ${esc(state.players[myVote]?.name || 'Someone')}</div>` : `
-        <div class="grid teams">${players.map(p => `<button class="team-btn" data-vote="${p.id}"><strong>${p.emoji || '🎉'} ${esc(p.name)}</strong><span>${esc(state.teams[p.team]?.name || '')}</span></button>`).join('')}</div>`}
-    </section>`;
-  }
-
-  function bindGameEvents(me){
-    $('#changeTeam')?.addEventListener('click', () => store.update(`players/${playerId}/team`, ''));
-    app.querySelectorAll('[data-answer]').forEach(btn => btn.addEventListener('click', () => store.update(`majority/answers/${playerId}`, btn.dataset.answer)));
-    app.querySelectorAll('[data-prediction]').forEach(btn => btn.addEventListener('click', () => store.update(`majority/predictions/${playerId}`, btn.dataset.prediction)));
-    $('#submitTeamAnswer')?.addEventListener('click', () => {
-      const text = $('#teamAnswerInput').value.trim();
-      if (!text) return toast('Type an answer first');
-      store.update(`teamAnswers/${me.team}`, { text, by: playerId, at: Date.now() });
-      toast('Team answer submitted'); beep();
+  async function submitMajority(field, value) {
+    requirePlayer();
+    if (state.current.type !== "majority") throw new Error("Majority Rules is not active.");
+    if (field === "answer" && state.current.phase !== "answer") throw new Error("Answering is closed.");
+    if (field === "prediction" && state.current.phase !== "predict") throw new Error("Prediction is not open yet.");
+    const p = currentPlayer();
+    await rootRef.child(`answers/${state.current.roundId}/${currentPlayerId}`).update({
+      [field]: value,
+      name: p.name,
+      team: p.team,
+      avatar: p.avatar || "✨",
+      updatedAt: Date.now()
     });
-    $('#teamAnswerInput')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#submitTeamAnswer')?.click(); });
-    app.querySelectorAll('[data-vote]').forEach(btn => btn.addEventListener('click', () => store.update(`votes/${playerId}`, btn.dataset.vote)));
+    toast(field === "answer" ? "Answer locked." : "Prediction locked.");
   }
 
-  function renderHostPanel(){
-    const current = state.game.type;
-    const phase = state.game.phase;
-    const html = `
-      <section class="host-panel" id="hostPanel">
-        <div style="display:flex;justify-content:space-between;gap:12px;align-items:center"><h3>Host</h3><button class="tiny-link" id="compactHost">${document.body.classList.contains('host-compact') ? 'Expand' : 'Collapse'}</button></div>
-        <div class="host-grid">
-          <div class="host-section">
-            <h4>Start a game</h4>
-            <div class="row">
-              ${hostGameBtn('majority','Majority')}
-              ${hostGameBtn('trivia','Trivia')}
-              ${hostGameBtn('emoji','Emoji')}
-              ${hostGameBtn('superlatives','Superlatives')}
-              ${hostGameBtn('final','Final')}
-              <button class="secondary-btn" data-host="lobby">Lobby</button>
-            </div>
-            <p class="muted small">No rooms. Everyone on this link plays together.</p>
-          </div>
-          <div class="host-section">
-            <h4>Round controls</h4>
-            ${roundControls(current, phase)}
-          </div>
-          <div class="host-section">
-            <h4>Scores</h4>
-            ${Object.entries(state.teams).map(([id,t]) => `
-              <div class="row" style="justify-content:space-between;margin-bottom:8px">
-                <strong>${esc(t.name)}: ${t.score || 0}</strong>
-                <span><button class="pill" data-score="${id}:-1">−</button> <button class="pill green" data-score="${id}:1">+</button></span>
-              </div>`).join('')}
-            <div class="row" style="justify-content:flex-start;margin-top:10px"><button class="danger-btn" id="resetBtn">Reset event</button><button class="secondary-btn" id="confettiBtn">Confetti</button></div>
-          </div>
-        </div>
-      </section>`;
-    $('#hostMount').innerHTML = html;
-    bindHostEvents();
+  async function submitTeamAnswer(form) {
+    requirePlayer();
+    if (!["trivia", "emoji", "final"].includes(state.current.type)) throw new Error("Team answers are not open.");
+    if (state.current.phase === "reveal") throw new Error("This round is already revealed.");
+    const p = currentPlayer();
+    if (!p.team) throw new Error("Pick a team first.");
+    const answer = String(new FormData(form).get("answer") || "").trim();
+    if (!answer) throw new Error("Type an answer first.");
+    await rootRef.child(`teamAnswers/${state.current.roundId}/${p.team}`).set({
+      answer,
+      submittedBy: p.name,
+      submittedById: currentPlayerId,
+      updatedAt: Date.now()
+    });
+    toast("Team answer submitted.");
   }
 
-  function hostGameBtn(type,label){ return `<button class="${state.game.type===type?'primary-btn':'secondary-btn'}" data-host="${type}">${label}</button>`; }
+  async function submitSuperVote(playerId) {
+    requirePlayer();
+    if (state.current.type !== "superlatives" || state.current.phase !== "answer") throw new Error("Voting is not open.");
+    if (!players[playerId]) throw new Error("Player not found.");
+    const p = currentPlayer();
+    await rootRef.child(`answers/${state.current.roundId}/${currentPlayerId}`).set({
+      vote: playerId,
+      name: p.name,
+      team: p.team,
+      updatedAt: Date.now()
+    });
+    toast("Vote locked.");
+  }
 
-  function roundControls(type, phase){
-    if (type === 'majority') {
-      const item = currentItem('majority');
-      const aCount = Object.keys(state.majority.answers || {}).length;
-      const pCount = Object.keys(state.majority.predictions || {}).length;
-      return `<p class="muted small">Q${state.game.index+1}: ${esc(item.q)}</p>
-        <div class="row" style="justify-content:flex-start">
-          <button class="primary-btn" data-step="majority-answer">Answer phase</button>
-          <button class="secondary-btn" data-step="majority-predict">Predict phase (${aCount})</button>
-          <button class="secondary-btn" data-step="majority-reveal">Reveal + score (${pCount})</button>
-          <button class="secondary-btn" data-step="next">Next Q</button>
-        </div>`;
+  async function awardMajorityPoints() {
+    requireHost();
+    if (state.current.awarded) return;
+    const summary = majoritySummary(getQuestion());
+    const updates = { "state/current/awarded": true };
+    TEAM_IDS.forEach(teamId => {
+      const currentScore = Number(state.teams[teamId].score || 0);
+      const base = Number(summary.correctByTeam[teamId] || 0);
+      const bonus = summary.bonusTeam === teamId ? 2 : 0;
+      updates[`state/teams/${teamId}/score`] = currentScore + base + bonus;
+    });
+    await rootRef.update(updates);
+    confetti();
+  }
+
+  async function awardTeam(teamId, points) {
+    requireHost();
+    if (!TEAM_IDS.includes(teamId)) return;
+    await adjustScore(teamId, points);
+    toast(`${state.teams[teamId].name} +${points}.`);
+  }
+
+  async function awardSuperlative() {
+    requireHost();
+    if (state.current.awarded) return;
+    const summary = superSummary();
+    if (!summary.winner) return;
+    const winner = players[summary.winner];
+    if (!winner?.team) return;
+    const teamId = winner.team;
+    await rootRef.update({
+      [`state/teams/${teamId}/score`]: Number(state.teams[teamId].score || 0) + 2,
+      "state/current/awarded": true
+    });
+    confetti();
+  }
+
+  async function adjustScore(teamId, delta) {
+    requireHost();
+    if (!TEAM_IDS.includes(teamId)) return;
+    await rootRef.child(`state/teams/${teamId}/score`).set(Number(state.teams[teamId].score || 0) + Number(delta));
+  }
+
+  async function updateTeamNames(form) {
+    requireHost();
+    const fd = new FormData(form);
+    const updates = {};
+    TEAM_IDS.forEach(teamId => {
+      const name = String(fd.get(`team_${teamId}`) || "").trim() || `Team ${teamId}`;
+      updates[`state/teams/${teamId}/name`] = name;
+    });
+    await rootRef.update(updates);
+    toast("Team names saved.");
+  }
+
+  async function moveIntro(delta) {
+    requireHost();
+    const order = state.current.introOrder || [];
+    const max = Math.max(order.length - 1, 0);
+    const next = Math.max(0, Math.min(max, (state.current.introIndex || 0) + delta));
+    await rootRef.child("state/current").update({ introIndex: next, timerEnd: null, updatedAt: Date.now() });
+  }
+
+  async function startTimer(seconds) {
+    requireHost();
+    await rootRef.child("state/current/timerEnd").set(Date.now() + seconds * 1000);
+  }
+
+  async function resetEvent() {
+    requireHost();
+    const ok = window.confirm("Reset scores, players, and current game? This cannot be undone.");
+    if (!ok) return;
+    await rootRef.set({ state: defaultState(), players: null, answers: null, teamAnswers: null });
+    localStorage.removeItem(STORAGE_KEY);
+    currentPlayerId = null;
+    toast("Event reset.");
+  }
+
+  async function signOut() {
+    if (currentPlayerId) await rootRef.child(`players/${currentPlayerId}`).remove();
+    localStorage.removeItem(STORAGE_KEY);
+    currentPlayerId = null;
+    toast("Profile removed on this device.");
+  }
+
+  function majoritySummary(q) {
+    const vals = Object.values(currentAnswers());
+    const counts = Object.fromEntries(q.options.map(opt => [opt, 0]));
+    vals.forEach(item => { if (item.answer in counts) counts[item.answer] += 1; });
+    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+    let majority = q.options[0];
+    q.options.forEach(opt => { if ((counts[opt] || 0) > (counts[majority] || 0)) majority = opt; });
+    const percent = Object.fromEntries(q.options.map(opt => [opt, total ? Math.round((counts[opt] || 0) / total * 100) : 0]));
+    const correctByTeam = { A: 0, B: 0, C: 0 };
+    vals.forEach(item => {
+      if (item.prediction === majority && TEAM_IDS.includes(item.team)) correctByTeam[item.team] += 1;
+    });
+    let bonusTeam = null;
+    let bonusScore = -1;
+    TEAM_IDS.forEach(teamId => {
+      if (correctByTeam[teamId] > bonusScore) { bonusScore = correctByTeam[teamId]; bonusTeam = teamId; }
+      else if (correctByTeam[teamId] === bonusScore) { bonusTeam = null; }
+    });
+    return { counts, total, percent, majority: total ? majority : null, correctByTeam, bonusTeam };
+  }
+
+  function superSummary() {
+    const voteCounts = {};
+    Object.values(currentAnswers()).forEach(item => {
+      if (item.vote) voteCounts[item.vote] = (voteCounts[item.vote] || 0) + 1;
+    });
+    const ranked = Object.entries(voteCounts).sort((a, b) => b[1] - a[1]);
+    return { ranked, winner: ranked[0]?.[0] || null };
+  }
+
+  function renderSetupMissing() {
+    $app.innerHTML = `
+      <main class="page">
+        <section class="empty-state" style="margin-top: 8vh; text-align:left;">
+          <div class="kicker">Firebase setup required</div>
+          <h2>This build is multiplayer-only.</h2>
+          <p>Paste your Firebase Web App config into <span class="code">firebase-config.js</span>, enable Realtime Database, then redeploy to GitHub Pages.</p>
+          <div class="error-panel">The app intentionally uses Firebase only for live multiplayer. Everyone uses the same event link.</div>
+        </section>
+      </main>
+    `;
+  }
+
+  function renderFatal(message) {
+    $app.innerHTML = `<main class="page"><section class="empty-state" style="margin-top:8vh"><h2>Could not load the game.</h2><p>${escapeHTML(message)}</p></section></main>`;
+  }
+
+  function requireHost() {
+    if (!hostUnlocked) throw new Error("Unlock host controls first.");
+  }
+
+  function requirePlayer() {
+    if (!currentPlayerId || !currentPlayer()) throw new Error("Add your name first.");
+  }
+
+  function timerRemaining() {
+    const end = state?.current?.timerEnd;
+    if (!end) return null;
+    return Math.max(0, Math.ceil((end - Date.now()) / 1000));
+  }
+
+  function memberToken(p) {
+    return `<span class="member-token"><span class="avatar">${escapeHTML(p.avatar || "✨")}</span>${escapeHTML(p.name)}</span>`;
+  }
+
+  function copyLink() {
+    navigator.clipboard?.writeText(window.location.href).then(() => toast("Link copied."), () => toast("Copy failed."));
+  }
+
+  function toast(message) {
+    clearTimeout(toastTimer);
+    const existing = document.querySelector(".toast");
+    if (existing) existing.remove();
+    const el = document.createElement("div");
+    el.className = "toast";
+    el.textContent = message;
+    document.body.appendChild(el);
+    toastTimer = setTimeout(() => el.remove(), 2400);
+  }
+
+  function confetti() {
+    const bits = ["●", "■", "▲", "◆", "✦"];
+    for (let i = 0; i < 70; i++) {
+      const el = document.createElement("div");
+      el.className = "confetti";
+      el.textContent = bits[Math.floor(Math.random() * bits.length)];
+      el.style.left = `${Math.random() * 100}vw`;
+      el.style.color = ["#173862", "#24527D", "#2E7D55", "#AD6B11", "#1D252D"][Math.floor(Math.random() * 5)];
+      el.style.animationDelay = `${Math.random() * .45}s`;
+      el.style.fontSize = `${12 + Math.random() * 18}px`;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 2500);
     }
-    if (['trivia','emoji','final'].includes(type)) {
-      const item = currentItem(type);
-      return `<p class="muted small">${esc(item.q)}<br>Answer: <strong>${esc(item.answer)}</strong></p>
-        <div class="row" style="justify-content:flex-start">
-          <button class="primary-btn" data-step="answers">Answer phase</button>
-          <button class="secondary-btn" data-step="reveal">Reveal</button>
-          <button class="secondary-btn" data-step="next">Next Q</button>
-        </div>
-        ${phase === 'reveal' ? `<div style="margin-top:10px">${Object.entries(state.teams).map(([id,t]) => `<div class="row" style="justify-content:space-between;margin-bottom:6px"><span>${esc(t.name)}</span><button class="pill green" data-award="${id}:${type==='final'?5:2}">Award ${type==='final'?5:2}</button></div>`).join('')}</div>` : ''}`;
+  }
+
+  function newRoundId() {
+    return `r_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  function shuffle(arr) {
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
     }
-    if (type === 'superlatives') {
-      return `<p class="muted small">${esc(currentItem('superlatives'))}</p>
-        <div class="row" style="justify-content:flex-start"><button class="primary-btn" data-step="vote">Vote phase</button><button class="secondary-btn" data-step="super-reveal">Reveal + score</button><button class="secondary-btn" data-step="next">Next prompt</button></div>`;
-    }
-    return `<p class="muted small">Start a game when intros are done.</p>`;
+    return copy;
   }
 
-  function bindHostEvents(){
-    $('#compactHost')?.addEventListener('click', () => { document.body.classList.toggle('host-compact'); render(); });
-    document.querySelectorAll('[data-host]').forEach(btn => btn.addEventListener('click', () => startGame(btn.dataset.host)));
-    document.querySelectorAll('[data-score]').forEach(btn => btn.addEventListener('click', () => {
-      const [team, delta] = btn.dataset.score.split(':'); addScore(team, Number(delta));
-    }));
-    document.querySelectorAll('[data-award]').forEach(btn => btn.addEventListener('click', () => {
-      const [team, delta] = btn.dataset.award.split(':'); addScore(team, Number(delta)); toast(`Awarded ${delta} points`); beep();
-    }));
-    document.querySelectorAll('[data-step]').forEach(btn => btn.addEventListener('click', () => hostStep(btn.dataset.step)));
-    $('#resetBtn')?.addEventListener('click', () => { if (confirm('Reset the whole event? This clears players, answers, and scores.')) store.reset(); });
-    $('#confettiBtn')?.addEventListener('click', confetti);
+  function sanitizeEventId(input) {
+    return String(input).toLowerCase().replace(/[^a-z0-9_-]/g, "-").replace(/-+/g, "-").slice(0, 80) || "happy-hour-main";
   }
 
-  function startGame(type){
-    if (type === 'lobby') return store.updateMany({ 'game/type': 'lobby', 'game/phase':'idle' });
-    const updates = { 'game/type': type, 'game/phase': type === 'superlatives' ? 'vote' : 'answer', 'game/index': 0, teamAnswers: {}, votes: {} };
-    if (type === 'majority') { updates['majority/answers'] = {}; updates['majority/predictions'] = {}; updates['majority/scoredKey'] = ''; }
-    if (['trivia','emoji','final'].includes(type)) updates.teamAnswers = {};
-    store.updateMany(updates);
-    beep();
+  async function sha256(text) {
+    const data = new TextEncoder().encode(text);
+    const hash = await crypto.subtle.digest("SHA-256", data);
+    return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, "0")).join("");
   }
 
-  function hostStep(step){
-    if (step === 'majority-answer') return store.updateMany({ 'game/phase':'answer', 'majority/answers': {}, 'majority/predictions': {}, 'majority/scoredKey': '' });
-    if (step === 'majority-predict') return store.updateMany({ 'game/phase':'predict', 'majority/predictions': {}, 'majority/scoredKey': '' });
-    if (step === 'majority-reveal') return revealMajority();
-    if (step === 'answers') return store.updateMany({ 'game/phase':'answer', teamAnswers: {} });
-    if (step === 'reveal') return store.updateMany({ 'game/phase':'reveal' });
-    if (step === 'vote') return store.updateMany({ 'game/phase':'vote', votes: {} });
-    if (step === 'super-reveal') return revealSuperlative();
-    if (step === 'next') return nextQuestion();
+  function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>'"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[ch]));
   }
 
-  function revealMajority(){
-    const item = currentItem('majority');
-    const counts = Object.fromEntries(item.options.map(o => [o, 0]));
-    Object.values(state.majority.answers || {}).forEach(v => { if (counts[v] !== undefined) counts[v]++; });
-    const majority = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]?.[0] || item.options[0];
-    const roundKey = `majority-${state.game.index}`;
-    const updates = { 'game/phase':'reveal', 'majority/scoredKey': roundKey };
-    if (state.majority.scoredKey !== roundKey) {
-      Object.entries(state.majority.predictions || {}).forEach(([pid,pred]) => {
-        const p = state.players[pid];
-        if (p?.team && pred === majority) {
-          const cur = state.teams[p.team]?.score || 0;
-          updates[`teams/${p.team}/score`] = (updates[`teams/${p.team}/score`] ?? cur) + 1;
-        }
-      });
-    }
-    store.updateMany(updates);
-    confetti(); beep();
+  function escapeAttr(value) {
+    return escapeHTML(value).replace(/`/g, "&#96;");
   }
-
-  function revealSuperlative(){
-    const counts = {};
-    Object.values(state.votes || {}).forEach(pid => counts[pid] = (counts[pid] || 0) + 1);
-    const winnerId = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]?.[0];
-    const winner = state.players[winnerId];
-    const updates = { 'game/phase':'reveal' };
-    if (winner?.team) updates[`teams/${winner.team}/score`] = (state.teams[winner.team]?.score || 0) + 2;
-    store.updateMany(updates);
-    confetti(); beep();
-  }
-
-  function nextQuestion(){
-    const type = state.game.type;
-    const max = bankLength(type);
-    const next = (state.game.index + 1) % max;
-    const updates = { 'game/index': next, 'game/phase': type === 'superlatives' ? 'vote' : 'answer' };
-    if (type === 'majority') { updates['majority/answers'] = {}; updates['majority/predictions'] = {}; updates['majority/scoredKey'] = ''; }
-    if (['trivia','emoji','final'].includes(type)) updates.teamAnswers = {};
-    if (type === 'superlatives') updates.votes = {};
-    store.updateMany(updates);
-  }
-
-  function addScore(team, delta){
-    store.update(`teams/${team}/score`, Math.max(0, (state.teams[team]?.score || 0) + delta));
-  }
-
-  function currentItem(type){
-    const bank = banks[type];
-    const idx = Math.max(0, Math.min(state.game.index || 0, bank.length - 1));
-    return bank[idx];
-  }
-  function bankLength(type){ return banks[type]?.length || 1; }
-  function teamCounts(){
-    const counts = { red:0, blue:0, green:0 };
-    Object.values(state.players || {}).forEach(p => { if (p.team) counts[p.team] = (counts[p.team] || 0) + 1; });
-    return counts;
-  }
-  function teamPlayers(team){ return Object.values(state.players || {}).filter(p => p.team === team).sort((a,b)=>(a.joinedAt||0)-(b.joinedAt||0)); }
-
-  function setByPath(obj, parts, value){
-    let cur = obj;
-    for (let i=0; i<parts.length-1; i++) {
-      if (parts[i] === '') continue;
-      if (!cur[parts[i]] || typeof cur[parts[i]] !== 'object') cur[parts[i]] = {};
-      cur = cur[parts[i]];
-    }
-    cur[parts[parts.length-1]] = value;
-  }
-  function makeId(){ return 'p_' + Math.random().toString(36).slice(2) + Date.now().toString(36); }
-  function esc(s){ return String(s ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
-  function escAttr(s){ return esc(s).replace(/`/g,'&#96;'); }
-  function toast(msg){
-    toastEl.textContent = msg;
-    toastEl.classList.remove('hidden');
-    setTimeout(() => toastEl.classList.add('hidden'), 1800);
-  }
-  function beep(){
-    if (!soundOn) return;
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.frequency.value = 620; gain.gain.value = 0.06; osc.start();
-      setTimeout(() => { osc.stop(); ctx.close(); }, 90);
-    } catch {}
-  }
-  function confetti(){
-    const c = $('#confetti');
-    c.innerHTML = '';
-    for (let i=0;i<90;i++) {
-      const piece = document.createElement('i');
-      piece.style.left = Math.random()*100 + 'vw';
-      piece.style.background = ['#ffcf4a','#ff5fb7','#75c7ff','#55e6a5','#ffffff'][Math.floor(Math.random()*5)];
-      piece.style.animationDelay = Math.random()*0.35 + 's';
-      piece.style.transform = `rotate(${Math.random()*180}deg)`;
-      c.appendChild(piece);
-    }
-    setTimeout(() => c.innerHTML = '', 2200);
-  }
-
-  init().catch((err) => {
-    console.error(err);
-    if (app) {
-      app.innerHTML = `<section class="card hero"><div style="font-size:54px">⚠️</div><h2>Couldn’t start the game</h2><p class="muted">Refresh the page. If this keeps happening, check the browser console for the error.</p></section>`;
-    }
-  });
 })();

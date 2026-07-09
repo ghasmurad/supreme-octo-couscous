@@ -1,50 +1,101 @@
-# Happy Hour Lite
+# Team Happy Hour — Production Multiplayer Build
 
-A simplified one-event virtual happy hour game app.
+A single-event, GitHub Pages-ready happy hour game board.
 
-## Flow
+Flow: **Name → Team → Play**.
 
-1. Add your name
-2. Pick a team
-3. Host starts games in order
+No rooms. No room codes. Everyone who opens the same GitHub Pages URL joins the same event.
 
-No room codes, no info cards, no setup flow for players.
+## Included games
 
-## Host
+- Fun Intros with a 45-second timer
+- Majority Rules: personal answer → predict majority → reveal → auto-score
+- Team Trivia: one answer per team → host awards points
+- Guess the Emoji: one answer per team → host awards points
+- Superlatives: everyone votes → host reveals winner → award points
+- Final Bonus: host-decided high-stakes question
 
-Click **Host** and enter:
+## Files
 
-`password123`
+- `index.html` — app shell
+- `style.css` — TRANZACT-inspired visual system
+- `app.js` — Firebase multiplayer app logic
+- `firebase-config.js` — paste your Firebase web config here
+- `firebase-rules.json` — starter Realtime Database rules
 
-The host can start games, advance rounds, reveal results, and adjust scores.
+## 1. Firebase setup
 
-## Live multi-device mode
+1. Open Firebase Console.
+2. Create a project.
+3. Add a Web App.
+4. Copy the Firebase config object.
+5. Enable **Realtime Database**.
+6. Paste your Firebase config into `firebase-config.js`.
 
-GitHub Pages is static, so live answers across different devices need Firebase Realtime Database.
+Keep the format like this:
 
-1. Create a Firebase project
-2. Enable Realtime Database
-3. Set temporary rules for the event:
+```js
+window.HHA_CONFIG = {
+  eventId: "happy-hour-main",
+  hostPasswordHash: "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f",
+  firebase: {
+    apiKey: "...",
+    authDomain: "...firebaseapp.com",
+    databaseURL: "https://...-default-rtdb.firebaseio.com",
+    projectId: "...",
+    storageBucket: "...appspot.com",
+    messagingSenderId: "...",
+    appId: "..."
+  }
+};
+```
+
+Host password is `password123`.
+
+> Note: the password is a convenience gate for a static internal event page, not enterprise authentication. It hides controls from normal participants but is not a true security boundary.
+
+## 2. Realtime Database rules
+
+For the event, you can paste the contents of `firebase-rules.json` into:
+
+**Firebase Console → Realtime Database → Rules**
+
+For a one-time internal event, these rules allow shared read/write access to the event path only:
+
+`events/happy-hour-main`
+
+After the event, turn access off:
 
 ```json
 {
   "rules": {
-    "happyHourLiteSingleEvent": {
-      ".read": true,
-      ".write": true
-    }
+    ".read": false,
+    ".write": false
   }
 }
 ```
 
-4. Paste your Firebase Web App config into `firebase-config.js`
-5. Upload all files to GitHub Pages
+## 3. Deploy on GitHub Pages
 
-If `firebase-config.js` is left as `null`, the app runs in local demo mode in one browser.
+1. Create a GitHub repo.
+2. Upload all files in this folder to the repo root.
+3. Go to **Settings → Pages**.
+4. Source: **Deploy from a branch**.
+5. Branch: `main`, folder: `/root`.
+6. Save and wait for the Pages URL.
 
-## Files
+## 4. Test
 
-- `index.html`
-- `app.js`
-- `firebase-config.js`
-- `README.md`
+Open the GitHub Pages link in two browser windows:
+
+1. Window 1: Add a player name and team.
+2. Window 2: Add another player.
+3. Click **Host**, enter `password123`, and start Majority Rules.
+4. Submit answers from both windows.
+5. Confirm the reveal and scoreboard update live.
+
+## Design notes
+
+The design follows a structured dashboard approach while staying simple for a happy hour: clear header, dominant current task, persistent scoreboard, progressive disclosure, strong status states, and minimal actions for players.
+
+The theme uses TRANZACT-inspired navy, white, gray, and blue tokens with restrained motion and accessible focus states.

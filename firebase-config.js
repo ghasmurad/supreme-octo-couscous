@@ -14,8 +14,7 @@ window.HHA_CONFIG = {
   firebase: {
     apiKey: "AIzaSyCm9OGrVLCH4ofH5gShc2wgPs_vRJBKa88",
     authDomain: "happy-hour-arcade.firebaseapp.com",
-    databaseURL: "https://
-happy-hour-arcade-default-rtdb.firebaseio.com",
+    databaseURL: "https://happy-hour-arcade-default-rtdb.firebaseio.com",
     projectId: "happy-hour-arcade",
     storageBucket: "happy-hour-arcade.firebasestorage.app",
     messagingSenderId: "804367537319",

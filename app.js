@@ -77,6 +77,8 @@
   let renderTimer = null;
   let renderQueued = false;
   let renderPending = false;
+  let connected = false;
+  const inFlight = new Set();
 
   document.addEventListener("DOMContentLoaded", boot);
 
@@ -122,6 +124,7 @@
     rootRef.child("players").on("value", (snap) => { players = snap.val() || {}; scheduleRender(); });
     rootRef.child("answers").on("value", (snap) => { answers = snap.val() || {}; scheduleRender(); });
     rootRef.child("teamAnswers").on("value", (snap) => { teamAnswers = snap.val() || {}; scheduleRender(); });
+    db.ref(".info/connected").on("value", (snap) => { connected = snap.val() === true; scheduleRender(); });
   }
 
   function attachEventHandlers() {
@@ -158,9 +161,9 @@
         case "submitMajorityPrediction": return submitMajority("prediction", el.dataset.value);
         case "submitTeamAnswer": return submitTeamAnswer(el);
         case "submitSuperVote": return submitSuperVote(el.dataset.player);
-        case "awardMajority": return awardMajorityPoints();
-        case "awardTeam": return awardTeam(el.dataset.team, Number(el.dataset.points || 0));
-        case "awardSuper": return awardSuperlative();
+        case "awardMajority": return guardOnce("awardMajority", awardMajorityPoints);
+        case "awardTeam": return guardOnce(`awardTeam:${el.dataset.team}`, () => awardTeam(el.dataset.team, Number(el.dataset.points || 0)));
+        case "awardSuper": return guardOnce("awardSuper", awardSuperlative);
         case "adjustScore": return adjustScore(el.dataset.team, Number(el.dataset.delta || 0));
         case "resetRound": return resetRound();
         case "resetEvent": return resetEvent();
@@ -169,6 +172,9 @@
         case "prevIntro": return moveIntro(-1);
         case "startTimer": return startTimer(Number(el.dataset.seconds || 45));
         case "confetti": return confetti();
+        case "reassignPlayer": return reassignPlayer(el.dataset.player, el.dataset.team);
+        case "removePlayer": return removePlayer(el.dataset.player);
+        case "switchTeam": return signOut();
         default: return null;
       }
     } catch (err) {
@@ -299,9 +305,10 @@
             </div>
           </div>
           <div class="header-actions">
-            <span class="pill pill-live">● Firebase live</span>
+            <span class="pill ${connected ? "pill-live" : "pill-warn"}">${connected ? "● Live" : "○ Reconnecting…"}</span>
             <span class="pill">${count} joined</span>
             <span class="pill">${escapeHTML(GAME_LABELS[state.current.type] || "Ready")}</span>
+            ${p?.name ? `<button class="btn" data-action="switchTeam">Not you?</button>` : ""}
             <button class="btn" data-action="copyLink">Copy link</button>
             <button class="btn ${hostUnlocked ? "btn-primary" : ""}" data-action="openHost">Host</button>
           </div>
@@ -327,6 +334,7 @@
 
   function renderJoin() {
     const p = currentPlayer() || {};
+    const joined = allPlayers().length;
     return `
       <section class="hero">
         <div>
@@ -336,7 +344,7 @@
           <form class="card card-pad form-grid" data-action="saveProfile" style="max-width: 680px; margin-top: 32px;">
             <div class="field">
               <label class="label" for="name">Your name</label>
-              <input id="name" name="name" class="input" required maxlength="40" autocomplete="name" placeholder="e.g., Ghassan" value="${escapeAttr(p.name || "")}" />
+              <input id="name" name="name" class="input" required maxlength="40" autocomplete="name" placeholder="e.g., Jordan" value="${escapeAttr(p.name || "")}" />
             </div>
             <div class="field">
               <label class="label" for="avatar">Avatar</label>
@@ -358,8 +366,8 @@
         <aside class="hero-panel">
           <div>
             <div class="kicker" style="color: rgba(255,255,255,.72);">Tonight</div>
-            <div class="metric">18</div>
-            <p>People, three teams, quick rounds, one live scoreboard.</p>
+            <div class="metric">${joined}</div>
+            <p>${joined === 1 ? "Person joined so far" : "People joined so far"} · three teams, quick rounds, one live scoreboard.</p>
           </div>
           <span class="pill pill-dark">Majority + Trivia + Emoji + Superlatives</span>
         </aside>
@@ -458,7 +466,7 @@
             <div class="kicker">Up next</div>
             <h3 class="question">${escapeHTML(person.avatar || "✨")} ${escapeHTML(person.name)}</h3>
             <div class="stats-grid">
-              <div class="stat"><b>${remaining || 45}</b><span>seconds</span></div>
+              <div class="stat"><b>${remaining ?? 45}</b><span>seconds</span></div>
               <div class="stat"><b>${escapeHTML(person.show ? "✓" : "—")}</b><span>favorite show</span></div>
               <div class="stat"><b>${escapeHTML(person.fact ? "✓" : "—")}</b><span>fun fact</span></div>
             </div>
@@ -540,8 +548,15 @@
         `).join("")}
       </div>
       <div class="stats-grid">
-        ${TEAM_IDS.map(teamId => `<div class="stat"><b>${summary.correctByTeam[teamId] || 0}</b><span>${escapeHTML(state.teams[teamId].name)} correct</span></div>`).join("")}
+        ${TEAM_IDS.map(teamId => {
+          const r = summary.respondentsByTeam[teamId] || 0;
+          const c = summary.correctByTeam[teamId] || 0;
+          const pct = r ? Math.round((c / r) * 100) : 0;
+          return `<div class="stat"><b>${r ? `${pct}%` : "—"}</b><span>${escapeHTML(state.teams[teamId].name)} · ${c}/${r} correct</span></div>`;
+        }).join("")}
       </div>
+      <p class="help">3 points to any team where more than half the team correctly predicted the room's majority, plus a +2 bonus for the single most accurate team.</p>
+      ${summary.tied ? `<div class="submitted-state">Tied for most accurate — no bonus this round.</div>` : ""}
       ${state.current.awarded ? `<div class="submitted-state">Points awarded.</div>` : hostUnlocked ? `<button class="btn btn-primary btn-large" data-action="awardMajority">Award majority points</button>` : ""}
     `;
   }
@@ -558,7 +573,7 @@
       <div class="game-card">
         <div class="game-top">
           <h2 class="game-title">${escapeHTML(GAME_LABELS[type])}</h2>
-          <span class="pill">${Object.keys(teamMap).length}/3 teams submitted</span>
+          <span class="pill">${Object.keys(teamMap).length}/${TEAM_IDS.length} teams submitted</span>
         </div>
         <div class="game-body">
           <div class="kicker">Team answer · ${points} points</div>
@@ -566,7 +581,7 @@
           ${phase === "reveal" ? renderTeamReveal(q, points) : renderTeamAnswerForm(mine)}
         </div>
         <div class="game-footer">
-          <span class="help">One answer per team. Last submission before reveal counts.</span>
+          <span class="help">${type === "final" ? "Pick one final bonus question to close the event — no need to cycle through all of them." : "One answer per team. Last submission before reveal counts."}</span>
           ${hostUnlocked ? hostPhaseButtons() : ""}
         </div>
       </div>
@@ -734,6 +749,20 @@
             </div>
           </div>
           <div class="host-section">
+            <h3>Players</h3>
+            <div class="answer-list">
+              ${allPlayers().length ? allPlayers().map(pl => `
+                <div class="answer-line">
+                  <div><b>${escapeHTML(pl.avatar || "✨")} ${escapeHTML(pl.name)}</b><br><span>${pl.team ? escapeHTML(state.teams[pl.team]?.name || pl.team) : "No team yet"}</span></div>
+                  <div class="controls">
+                    ${TEAM_IDS.filter(t => t !== pl.team).map(t => `<button class="btn" data-action="reassignPlayer" data-player="${pl.id}" data-team="${t}">→ ${escapeHTML(state.teams[t].name)}</button>`).join("")}
+                    <button class="btn btn-danger" data-action="removePlayer" data-player="${pl.id}">Remove</button>
+                  </div>
+                </div>
+              `).join("") : `<div class="answer-line"><b>No one has joined yet.</b></div>`}
+            </div>
+          </div>
+          <div class="host-section">
             <h3>Team names</h3>
             <form class="control-grid" data-action="updateTeamNames">
               ${TEAM_IDS.map(teamId => `<input class="small-input" name="team_${teamId}" value="${escapeAttr(state.teams[teamId].name)}" aria-label="Team ${teamId} name" />`).join("")}
@@ -791,6 +820,24 @@
     if (!TEAM_IDS.includes(teamId)) throw new Error("Choose a valid team.");
     await rootRef.child(`players/${currentPlayerId}`).update({ team: teamId, updatedAt: Date.now() });
     toast(`Joined ${state.teams[teamId].name}.`);
+  }
+
+  async function reassignPlayer(playerId, teamId) {
+    requireHost();
+    if (!playerId || !players[playerId]) throw new Error("Player not found.");
+    if (!TEAM_IDS.includes(teamId)) throw new Error("Choose a valid team.");
+    await rootRef.child(`players/${playerId}`).update({ team: teamId, updatedAt: Date.now() });
+    toast(`Moved ${players[playerId].name} to ${state.teams[teamId].name}.`);
+  }
+
+  async function removePlayer(playerId) {
+    requireHost();
+    if (!playerId || !players[playerId]) throw new Error("Player not found.");
+    const name = players[playerId].name;
+    const ok = window.confirm(`Remove ${name} from this event?`);
+    if (!ok) return;
+    await rootRef.child(`players/${playerId}`).remove();
+    toast(`${name} removed.`);
   }
 
   async function unlockHost(form) {
@@ -916,16 +963,24 @@
 
   async function awardMajorityPoints() {
     requireHost();
-    if (state.current.awarded) return;
-    const summary = majoritySummary(getQuestion());
-    const updates = { "state/current/awarded": true };
-    TEAM_IDS.forEach(teamId => {
-      const currentScore = Number(state.teams[teamId].score || 0);
-      const base = Number(summary.correctByTeam[teamId] || 0);
-      const bonus = summary.bonusTeam === teamId ? 2 : 0;
-      updates[`state/teams/${teamId}/score`] = currentScore + base + bonus;
+    const q = getQuestion();
+    const roundId = state.current.roundId;
+    const awardResult = await rootRef.child("state/current").transaction((current) => {
+      if (!current || current.roundId !== roundId || current.awarded) return current;
+      current.awarded = true;
+      return current;
     });
-    await rootRef.update(updates);
+    if (!awardResult.committed || !awardResult.snapshot.val()?.awarded) return;
+    // Recompute from the answers as of award time. If another host click already
+    // won the transaction above, we return early and never double-apply points.
+    const summary = majoritySummary(q);
+    await Promise.all(TEAM_IDS.map((teamId) =>
+      rootRef.child(`state/teams/${teamId}/score`).transaction((score) => {
+        const base = summary.baseByTeam[teamId] || 0;
+        const bonus = summary.bonusTeam === teamId ? 2 : 0;
+        return Number(score || 0) + base + bonus;
+      })
+    ));
     confetti();
   }
 
@@ -938,23 +993,25 @@
 
   async function awardSuperlative() {
     requireHost();
-    if (state.current.awarded) return;
+    const roundId = state.current.roundId;
+    const awardResult = await rootRef.child("state/current").transaction((current) => {
+      if (!current || current.roundId !== roundId || current.awarded) return current;
+      current.awarded = true;
+      return current;
+    });
+    if (!awardResult.committed || !awardResult.snapshot.val()?.awarded) return;
     const summary = superSummary();
     if (!summary.winner) return;
     const winner = players[summary.winner];
     if (!winner?.team) return;
-    const teamId = winner.team;
-    await rootRef.update({
-      [`state/teams/${teamId}/score`]: Number(state.teams[teamId].score || 0) + 2,
-      "state/current/awarded": true
-    });
+    await rootRef.child(`state/teams/${winner.team}/score`).transaction((score) => Number(score || 0) + 2);
     confetti();
   }
 
   async function adjustScore(teamId, delta) {
     requireHost();
     if (!TEAM_IDS.includes(teamId)) return;
-    await rootRef.child(`state/teams/${teamId}/score`).set(Number(state.teams[teamId].score || 0) + Number(delta));
+    await rootRef.child(`state/teams/${teamId}/score`).transaction((score) => Number(score || 0) + Number(delta));
   }
 
   async function updateTeamNames(form) {
@@ -1007,17 +1064,37 @@
     let majority = q.options[0];
     q.options.forEach(opt => { if ((counts[opt] || 0) > (counts[majority] || 0)) majority = opt; });
     const percent = Object.fromEntries(q.options.map(opt => [opt, total ? Math.round((counts[opt] || 0) / total * 100) : 0]));
+
+    // Score by each team's prediction ACCURACY, not raw headcount — otherwise a
+    // bigger team automatically racks up more "correct" hits than a smaller,
+    // equally (or more) accurate team just by having more members.
+    const respondentsByTeam = { A: 0, B: 0, C: 0 };
     const correctByTeam = { A: 0, B: 0, C: 0 };
     vals.forEach(item => {
-      if (item.prediction === majority && TEAM_IDS.includes(item.team)) correctByTeam[item.team] += 1;
+      if (!TEAM_IDS.includes(item.team) || !item.prediction) return;
+      respondentsByTeam[item.team] += 1;
+      if (item.prediction === majority) correctByTeam[item.team] += 1;
     });
+    const pctByTeam = {};
+    TEAM_IDS.forEach(teamId => {
+      pctByTeam[teamId] = respondentsByTeam[teamId] ? correctByTeam[teamId] / respondentsByTeam[teamId] : 0;
+    });
+    const baseByTeam = {};
+    TEAM_IDS.forEach(teamId => {
+      baseByTeam[teamId] = respondentsByTeam[teamId] > 0 && pctByTeam[teamId] > 0.5 ? 3 : 0;
+    });
+
     let bonusTeam = null;
     let bonusScore = -1;
+    let tied = false;
     TEAM_IDS.forEach(teamId => {
-      if (correctByTeam[teamId] > bonusScore) { bonusScore = correctByTeam[teamId]; bonusTeam = teamId; }
-      else if (correctByTeam[teamId] === bonusScore) { bonusTeam = null; }
+      if (respondentsByTeam[teamId] === 0) return;
+      if (pctByTeam[teamId] > bonusScore) { bonusScore = pctByTeam[teamId]; bonusTeam = teamId; tied = false; }
+      else if (pctByTeam[teamId] === bonusScore) { bonusTeam = null; tied = true; }
     });
-    return { counts, total, percent, majority: total ? majority : null, correctByTeam, bonusTeam };
+    if (bonusScore <= 0) bonusTeam = null;
+
+    return { counts, total, percent, majority: total ? majority : null, correctByTeam, respondentsByTeam, pctByTeam, baseByTeam, bonusTeam, tied };
   }
 
   function superSummary() {
@@ -1050,6 +1127,16 @@
     if (!hostUnlocked) throw new Error("Unlock host controls first.");
   }
 
+  async function guardOnce(key, fn) {
+    if (inFlight.has(key)) return;
+    inFlight.add(key);
+    try {
+      await fn();
+    } finally {
+      inFlight.delete(key);
+    }
+  }
+
   function requirePlayer() {
     if (!currentPlayerId || !currentPlayer()) throw new Error("Add your name first.");
   }
@@ -1074,6 +1161,8 @@
     if (existing) existing.remove();
     const el = document.createElement("div");
     el.className = "toast";
+    el.setAttribute("role", "status");
+    el.setAttribute("aria-live", "polite");
     el.textContent = message;
     document.body.appendChild(el);
     toastTimer = setTimeout(() => el.remove(), 2400);

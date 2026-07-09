@@ -21,12 +21,12 @@ window.HHA_CONFIG = {
   eventId: "happy-hour-main",
   hostPasswordHash: "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f", // default: password123 — CHANGE THIS
   firebase: {
-    apiKey: "PASTE_API_KEY",
-    authDomain: "PASTE_PROJECT_ID.firebaseapp.com",
-    databaseURL: "PASTE_DATABASE_URL", // e.g. https://PASTE_PROJECT_ID-default-rtdb.firebaseio.com
-    projectId: "PASTE_PROJECT_ID",
-    storageBucket: "PASTE_PROJECT_ID.appspot.com",
-    messagingSenderId: "PASTE_SENDER_ID",
-    appId: "PASTE_APP_ID"
+    apiKey: "AIzaSyCm9OGrVLCH4ofH5gShc2wgPs_vRJBKa88",
+    authDomain: "happy-hour-arcade.firebaseapp.com",
+    databaseURL: "https://happy-hour-arcade-default-rtdb.firebaseio.com",
+    projectId: "happy-hour-arcade",
+    storageBucket: "happy-hour-arcade.firebasestorage.app",
+    messagingSenderId: "804367537319",
+    appId: "1:804367537319:web:fe0484d648642828bdf782"
   }
 };

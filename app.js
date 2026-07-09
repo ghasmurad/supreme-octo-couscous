@@ -110,7 +110,6 @@ let state = {
 };
 localStorage.setItem(PLAYER_ID_KEY, state.playerId);
 
-init();
 
 async function init() {
   store = await createStore();
@@ -1539,3 +1538,20 @@ function escapeHtml(str) {
   return String(str ?? '').replace(/[&<>'"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' }[c]));
 }
 function escapeAttr(str) { return escapeHtml(str).replace(/`/g, '&#96;'); }
+
+
+// Start the app after every class and helper is initialized.
+// This avoids a temporal-dead-zone crash in local demo mode when LocalStore is used.
+init().catch(err => {
+  console.error(err);
+  if (app) {
+    app.innerHTML = `
+      <section class="card error-card">
+        <div class="eyebrow">App startup error</div>
+        <h1>Something failed to load.</h1>
+        <p class="muted">Open the browser console for details, or refresh the page.</p>
+        <pre>${escapeHtml(err?.message || String(err))}</pre>
+      </section>
+    `;
+  }
+});

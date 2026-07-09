@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Virtual Happy Hour Game Night</title>
+  <style>
+    :root {
+      --bg1: #160f2f;
+      --bg2: #32155f;
+      --card: rgba(255,255,255,.11);
+      --card2: rgba(255,255,255,.17);
+      --text: #fff8ff;
+      --muted: rgba(255,255,255,.72);
+      --line: rgba(255,255,255,.18);
+      --pink: #ff64c8;
+      --orange: #ffb84d;
+      --mint: #5ef3c2;
+      --cyan: #6ee7ff;
+      --danger: #ff6b7a;
+      --shadow: 0 24px 70px rgba(0,0,0,.35);
+      --radius: 26px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255,100,200,.45), transparent 32rem),
+        radial-gradient(circle at top right, rgba(110,231,255,.35), transparent 30rem),
+        radial-gradient(circle at 50% 10%, rgba(255,184,77,.22), transparent 26rem),
+        linear-gradient(135deg, var(--bg1), var(--bg2) 55%, #0d1734);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,.8), transparent 75%);
+      pointer-events: none;
+    }
+
+    .noise {
+      position: fixed;
+      inset: 0;
+      opacity: .1;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.45'/%3E%3C/svg%3E");
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(22px);
+      background: rgba(11, 7, 31, .58);
+      border-bottom: 1px solid var(--line);
+    }
+
+    nav {
+      max-width: 1240px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 14px 22px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 900;
+      letter-spacing: -.03em;
+    }
+
+    .logo {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--pink), var(--orange));
+      box-shadow: 0 12px 28px rgba(255, 100, 200, .28);
+      transform: rotate(-5deg);
+    }
+
+    .navlinks {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .navlinks a,
+    .mini-pill {
+      color: var(--text);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 750;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+
+    .navlinks a:hover { background: rgba(255,255,255,.16); }
+
+    main {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 28px 22px 80px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 22px;
+      align-items: stretch;
+      margin-top: 18px;
+    }
+
+    .glass {
+      background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.08));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(20px);
+    }
+
+    .hero-card {
+      padding: clamp(28px, 5vw, 62px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-card::after {
+      content: "🎉";
+      position: absolute;
+      right: 28px;
+      bottom: -24px;
+      font-size: 160px;
+      opacity: .18;
+      transform: rotate(12deg);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      color: #1b1230;
+      background: linear-gradient(90deg, var(--mint), var(--cyan));
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-weight: 950;
+      font-size: 13px;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3 { margin: 0; line-height: .98; letter-spacing: -.06em; }
+    h1 { font-size: clamp(46px, 8vw, 92px); margin-top: 22px; max-width: 850px; }
+    h2 { font-size: clamp(34px, 4vw, 56px); margin-bottom: 12px; }
+    h3 { font-size: 24px; margin-bottom: 10px; }
+    p { color: var(--muted); line-height: 1.62; margin: 0; }
+
+    .hero-sub {
+      font-size: 19px;
+      max-width: 720px;
+      margin-top: 20px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 28px;
+    }
+
+    button, .button-link {
+      appearance: none;
+      border: 0;
+      border-radius: 16px;
+      padding: 12px 16px;
+      color: #160f2f;
+      font-weight: 900;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--orange), var(--pink));
+      box-shadow: 0 12px 30px rgba(255, 100, 200, .22);
+      transition: transform .16s ease, filter .16s ease, background .16s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    button:hover, .button-link:hover { transform: translateY(-1px); filter: brightness(1.06); }
+    button:active, .button-link:active { transform: translateY(1px) scale(.99); }
+    button.secondary, .button-link.secondary {
+      color: var(--text);
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.17);
+      box-shadow: none;
+    }
+    button.ghost {
+      color: var(--text);
+      background: transparent;
+      border: 1px solid rgba(255,255,255,.2);
+      box-shadow: none;
+    }
+    button.danger { background: linear-gradient(135deg, #ff6b7a, #ff9f68); }
+    button.small { padding: 8px 10px; border-radius: 12px; font-size: 13px; }
+    button:disabled { cursor: not-allowed; opacity: .55; transform: none; }
+
+    .side-stack { display: grid; gap: 18px; }
+    .stat-card { padding: 24px; }
+    .big-number { font-size: 58px; font-weight: 950; letter-spacing: -.08em; }
+    .stat-label { color: var(--muted); font-weight: 700; }
+    .quick-list { display: grid; gap: 10px; margin-top: 18px; }
+    .quick-list div {
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: rgba(255,255,255,.86);
+    }
+
+    section { margin-top: 28px; scroll-margin-top: 90px; }
+    .section-card { padding: clamp(22px, 3vw, 36px); }
+
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+
+    .agenda { counter-reset: item; }
+    .agenda-item {
+      position: relative;
+      padding: 18px 18px 18px 68px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 20px;
+      margin-top: 12px;
+    }
+    .agenda-item::before {
+      counter-increment: item;
+      content: counter(item);
+      position: absolute;
+      left: 18px;
+      top: 18px;
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--mint), var(--cyan));
+      color: #16112d;
+      font-weight: 950;
+    }
+    .agenda-item strong { display: block; font-size: 18px; margin-bottom: 4px; }
+    .agenda-item span { color: var(--muted); }
+
+    label { display: block; font-weight: 850; margin-bottom: 8px; color: rgba(255,255,255,.9); }
+    input, textarea, select {
+      width: 100%;
+      color: var(--text);
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 16px;
+      padding: 12px 13px;
+      outline: none;
+      font: inherit;
+    }
+    input::placeholder, textarea::placeholder { color: rgba(255,255,255,.45); }
+    textarea { min-height: 170px; resize: vertical; }
+    select option { color: #16112d; }
+
+    .team-card {
+      padding: 18px;
+      border-radius: 22px;
+      background: rgba(255,255,255,.09);
+      border: 1px solid rgba(255,255,255,.13);
+    }
+    .team-top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 14px; }
+    .team-name { font-size: 22px; font-weight: 950; letter-spacing: -.04em; }
+    .score {
+      font-size: 48px;
+      font-weight: 950;
+      letter-spacing: -.08em;
+      line-height: 1;
+    }
+    .members { display: flex; flex-wrap: wrap; gap: 8px; min-height: 38px; }
+    .chip {
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.12);
+      color: rgba(255,255,255,.88);
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .question-stage {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 18px;
+      align-items: stretch;
+    }
+    .question-card {
+      min-height: 360px;
+      padding: clamp(22px, 3vw, 40px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+    .question-card::after {
+      content: "?";
+      position: absolute;
+      right: 24px;
+      top: 0;
+      font-size: 260px;
+      font-weight: 950;
+      opacity: .07;
+      line-height: .8;
+      pointer-events: none;
+    }
+    .round-tag {
+      display: inline-flex;
+      width: fit-content;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.14);
+      color: rgba(255,255,255,.9);
+      font-weight: 850;
+      margin-bottom: 18px;
+    }
+    .question-text {
+      font-size: clamp(32px, 5vw, 62px);
+      font-weight: 950;
+      letter-spacing: -.065em;
+      line-height: 1.04;
+      position: relative;
+      z-index: 1;
+    }
+    .answer-box {
+      margin-top: 24px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: rgba(94,243,194,.14);
+      border: 1px solid rgba(94,243,194,.35);
+      display: none;
+      color: rgba(255,255,255,.93);
+      font-size: 18px;
+      font-weight: 850;
+      position: relative;
+      z-index: 1;
+    }
+    .question-meta { color: var(--muted); margin-top: 18px; font-weight: 700; }
+
+    .controls-card { padding: 20px; }
+    .control-group { margin-top: 16px; display: grid; gap: 9px; }
+    .button-row { display: flex; flex-wrap: wrap; gap: 9px; }
+
+    .score-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .timer-box {
+      display: grid;
+      gap: 14px;
+      justify-items: center;
+      padding: 24px;
+      border-radius: 24px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+    .timer-number { font-size: 80px; font-weight: 950; letter-spacing: -.08em; line-height: 1; }
+    .timer-label { color: var(--muted); font-weight: 800; }
+
+    .intro-prompt {
+      font-size: clamp(28px, 4vw, 48px);
+      font-weight: 950;
+      letter-spacing: -.055em;
+      line-height: 1.05;
+      padding: 26px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, rgba(255,100,200,.22), rgba(110,231,255,.14));
+      border: 1px solid rgba(255,255,255,.16);
+    }
+
+    .prompt-deck { display: grid; gap: 12px; }
+    .prompt-card {
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      font-weight: 800;
+      color: rgba(255,255,255,.9);
+    }
+
+    .admin-shell {
+      border: 1px solid rgba(255,184,77,.38);
+      box-shadow: 0 24px 70px rgba(255,184,77,.08), var(--shadow);
+    }
+    .locked, .unlocked { display: none; }
+    body:not(.admin-on) .locked { display: block; }
+    body.admin-on .unlocked { display: block; }
+    body:not(.admin-on) .host-only { display: none !important; }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%) translateY(120px);
+      opacity: 0;
+      background: rgba(18, 13, 42, .94);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 16px;
+      padding: 12px 16px;
+      box-shadow: var(--shadow);
+      z-index: 100;
+      transition: all .22s ease;
+      font-weight: 800;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    canvas#confetti {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 99;
+    }
+
+    .footer-note {
+      color: rgba(255,255,255,.55);
+      font-size: 13px;
+      margin-top: 22px;
+    }
+
+    .hide { display: none !important; }
+
+    @media (max-width: 980px) {
+      .hero, .question-stage, .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+      .navlinks { display: none; }
+      .question-card { min-height: 320px; }
+    }
+
+    @media print {
+      header, .host-only, button, .hero-actions { display: none !important; }
+      body { background: #fff; color: #111; }
+      .glass, .team-card, .agenda-item, .prompt-card { background: #fff; color: #111; border: 1px solid #ddd; box-shadow: none; }
+      p, span, .stat-label, .question-meta { color: #333 !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="noise"></div>
+  <canvas id="confetti"></canvas>
+
+  <header>
+    <nav>
+      <div class="brand"><div class="logo">🥂</div><div>Virtual Happy Hour</div></div>
+      <div class="navlinks">
+        <a href="#agenda">Agenda</a>
+        <a href="#intros">Intros</a>
+        <a href="#teams">Teams</a>
+        <a href="#game">Game</a>
+        <a href="#admin">Host Panel</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="top">
+      <div class="hero-card glass">
+        <div class="eyebrow">✨ 18-person team game night</div>
+        <h1>Happy Hour Battle Royale</h1>
+        <p class="hero-sub">A fast, friendly, competitive virtual happy hour with fun intros, team trivia, majority-rule chaos, emoji puzzles, and a live scoreboard.</p>
+        <div class="hero-actions">
+          <a class="button-link" href="#game">Start the Game</a>
+          <a class="button-link secondary" href="#admin">Unlock Host Panel</a>
+          <button type="button" class="ghost" onclick="celebrate('Party mode activated 🎉')">Party Mode</button>
+        </div>
+      </div>
+
+      <div class="side-stack">
+        <div class="stat-card glass">
+          <div class="big-number">60</div>
+          <div class="stat-label">minute agenda</div>
+          <div class="quick-list">
+            <div><span>Teams</span><strong>3 × 6</strong></div>
+            <div><span>Intro timer</span><strong>45 sec</strong></div>
+            <div><span>Game rounds</span><strong>4</strong></div>
+          </div>
+        </div>
+        <div class="stat-card glass">
+          <h3>Best used as</h3>
+          <p>Host screen-shares this page. Teams discuss in breakout rooms or live, then submit answers in chat.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="agenda" class="glass section-card">
+      <h2>Run of Show</h2>
+      <p>Keep the energy moving. The host controls the page, teams answer in chat, and the scoreboard keeps everyone invested.</p>
+      <div class="agenda">
+        <div class="agenda-item"><strong>Welcome + Vibe Check — 5 min</strong><span>Quick hello, explain the rules, remind everyone this is low pressure and high fun.</span></div>
+        <div class="agenda-item"><strong>Fun Intros — 15 min</strong><span>Name, how long you’ve been here, favorite show/movie/comfort rewatch, and one harmless hot take.</span></div>
+        <div class="agenda-item"><strong>Team Setup — 5 min</strong><span>Split into 3 teams of 6, pick team names, and choose one person to submit answers.</span></div>
+        <div class="agenda-item"><strong>Competitive Mini Game — 25 min</strong><span>Pop culture, majority rules, guess the emoji, and team fun bonus prompts.</span></div>
+        <div class="agenda-item"><strong>Winner + Wrap — 10 min</strong><span>Celebrate the winning team and end with one easy “what are you looking forward to?” prompt.</span></div>
+      </div>
+    </section>
+
+    <section id="intros" class="glass section-card">
+      <div class="grid-2">
+        <div>
+          <h2>Fun Intros</h2>
+          <p>Each person gets about 45 seconds. Use the prompt below or randomize it to keep the intros fresh.</p>
+          <div style="height:16px"></div>
+          <div class="intro-prompt" id="introPrompt">Name + how long you’ve been here + favorite show, movie, or comfort rewatch.</div>
+          <div class="button-row" style="margin-top:16px">
+            <button type="button" onclick="randomIntroPrompt()">Random Intro Prompt</button>
+            <button type="button" class="secondary" onclick="startTimer(45)">Start 45s Timer</button>
+            <button type="button" class="ghost" onclick="resetTimer(45)">Reset Timer</button>
+          </div>
+        </div>
+        <div>
+          <div class="timer-box">
+            <div class="timer-number" id="timerDisplay">45</div>
+            <div class="timer-label">seconds per person</div>
+            <div class="button-row">
+              <button type="button" class="small secondary" onclick="startTimer(30)">30s</button>
+              <button type="button" class="small secondary" onclick="startTimer(45)">45s</button>
+              <button type="button" class="small secondary" onclick="startTimer(60)">60s</button>
+            </div>
+          </div>
+          <p class="footer-note">Tip: Ask people to keep it to one sentence each for the show/movie answer and one sentence for the fun fact.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="teams" class="glass section-card">
+      <h2>Teams + Scoreboard</h2>
+      <p>Add names in the host panel, then auto-split everyone into 3 teams. Scores save in this browser automatically.</p>
+      <div style="height:16px"></div>
+      <div class="grid-3" id="teamGrid"></div>
+    </section>
+
+    <section id="game" class="glass section-card">
+      <h2>Competitive Mini Game</h2>
+      <p>Choose a round, show a question, let teams discuss, reveal the answer, and award points.</p>
+      <div style="height:18px"></div>
+      <div class="question-stage">
+        <div class="question-card glass">
+          <div>
+            <div class="round-tag" id="roundTag">🎲 Ready</div>
+            <div class="question-text" id="questionText">Unlock the host panel, pick a round, and hit “Next Question.”</div>
+            <div class="answer-box" id="answerBox">Answer will appear here.</div>
+          </div>
+          <div class="question-meta" id="questionMeta">Suggested pace: 30 seconds discussion + 10 seconds reveal.</div>
+        </div>
+
+        <div class="controls-card glass">
+          <h3>Game Controls</h3>
+          <div class="control-group host-only">
+            <label for="roundSelect">Round</label>
+            <select id="roundSelect" onchange="setRound(this.value)"></select>
+          </div>
+          <div class="control-group host-only">
+            <div class="button-row">
+              <button type="button" onclick="nextQuestion()">Next Question</button>
+              <button type="button" class="secondary" onclick="revealAnswer()">Reveal Answer</button>
+              <button type="button" class="ghost" onclick="markQuestionPlayed()">Skip / Mark Played</button>
+            </div>
+          </div>
+          <div class="control-group host-only">
+            <label>Award Points</label>
+            <div id="awardButtons"></div>
+          </div>
+          <div class="control-group">
+            <label>Rules</label>
+            <div class="prompt-deck">
+              <div class="prompt-card">Correct answer = 1 point</div>
+              <div class="prompt-card">Fastest correct answer = optional bonus point</div>
+              <div class="prompt-card">Funniest wrong answer = optional chaos point</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="glass section-card">
+      <h2>Prompt Bank</h2>
+      <p>Use these if you want to manually run a round instead of using the question display.</p>
+      <div style="height:16px"></div>
+      <div class="grid-4">
+        <div class="prompt-card">What show is set in Scranton, Pennsylvania?</div>
+        <div class="prompt-card">Coffee or tea — what will the majority pick?</div>
+        <div class="prompt-card">🧙‍♂️💍🗻</div>
+        <div class="prompt-card">Who is most likely to have 47 browser tabs open?</div>
+        <div class="prompt-card">Beach or mountains — majority wins.</div>
+        <div class="prompt-card">🐠🔎🌊</div>
+        <div class="prompt-card">Who is most likely to survive a zombie apocalypse?</div>
+        <div class="prompt-card">What movie features “May the Force be with you”?</div>
+      </div>
+    </section>
+
+    <section id="admin" class="glass section-card admin-shell">
+      <h2>Host Admin Panel</h2>
+      <p>Unlock controls for team setup, scoring, question navigation, and reset tools.</p>
+
+      <div class="locked" style="margin-top:18px">
+        <div class="grid-2">
+          <div>
+            <label for="adminPassword">Host password</label>
+            <input id="adminPassword" type="password" placeholder="Enter password" onkeydown="if(event.key==='Enter') unlockAdmin()" />
+          </div>
+          <div style="align-self:end" class="button-row">
+            <button type="button" onclick="unlockAdmin()">Unlock</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="unlocked" style="margin-top:18px">
+        <div class="grid-2">
+          <div>
+            <h3>Participant List</h3>
+            <p>Paste one name per line. Then auto-split into 3 teams.</p>
+            <div style="height:12px"></div>
+            <textarea id="participantInput" placeholder="Avery&#10;Jordan&#10;Sam&#10;Taylor"></textarea>
+            <div class="button-row" style="margin-top:12px">
+              <button type="button" onclick="assignTeams()">Auto-Split Teams</button>
+              <button type="button" class="secondary" onclick="loadSampleNames()">Load Sample Names</button>
+              <button type="button" class="ghost" onclick="clearParticipants()">Clear Names</button>
+            </div>
+          </div>
+          <div>
+            <h3>Host Tools</h3>
+            <div class="prompt-deck">
+              <div class="prompt-card">1. Screen-share this page.</div>
+              <div class="prompt-card">2. Split people into 3 teams of 6.</div>
+              <div class="prompt-card">3. Teams submit final answers in chat.</div>
+              <div class="prompt-card">4. Award points live and celebrate shamelessly.</div>
+            </div>
+            <div class="button-row" style="margin-top:14px">
+              <button type="button" onclick="celebrate('Confetti for the people 🎉')">Confetti</button>
+              <button type="button" class="secondary" onclick="saveState(); showToast('Saved!')">Save</button>
+              <button type="button" class="danger" onclick="resetAll()">Reset All</button>
+              <button type="button" class="ghost" onclick="lockAdmin()">Lock Panel</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="height:22px"></div>
+        <div class="grid-3">
+          <div class="team-card">
+            <label for="teamName0">Team 1 Name</label>
+            <input id="teamName0" onchange="renameTeam(0, this.value)" />
+          </div>
+          <div class="team-card">
+            <label for="teamName1">Team 2 Name</label>
+            <input id="teamName1" onchange="renameTeam(1, this.value)" />
+          </div>
+          <div class="team-card">
+            <label for="teamName2">Team 3 Name</label>
+            <input id="teamName2" onchange="renameTeam(2, this.value)" />
+          </div>
+        </div>
+      </div>
+      <p class="footer-note">Note: this is a static GitHub Pages file, so the host password only hides controls in the browser. It is not secure authentication.</p>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const ADMIN_PASSWORD = 'password123';
+    const STORAGE_KEY = 'virtualHappyHourBattleStateV1';
+
+    const introPrompts = [
+      'Name + how long you’ve been here + favorite show, movie, or comfort rewatch.',
+      'Name + how long you’ve been here + your most harmless hot take.',
+      'Name + how long you’ve been here + a show you will always recommend.',
+      'Name + how long you’ve been here + your dream vacation snack combo.',
+      'Name + how long you’ve been here + the last thing that made you laugh.',
+      'Name + how long you’ve been here + one thing people should ask you about later.',
+      'Name + how long you’ve been here + beach, mountains, or couch?',
+      'Name + how long you’ve been here + a movie you’ve seen way too many times.'
+    ];
+
+    const rounds = {
+      pop: {
+        label: '🍿 Pop Culture',
+        meta: 'Teams get 30 seconds. One answer per team in chat.',
+        questions: [
+          { q: 'What show is set in Scranton, Pennsylvania?', a: 'The Office' },
+          { q: 'What show has a coffee shop called Central Perk?', a: 'Friends' },
+          { q: 'What show features the phrase “Winter is coming”?', a: 'Game of Thrones' },
+          { q: 'What show features the character Ted Lasso?', a: 'Ted Lasso' },
+          { q: 'What movie features the line “I’ll be back”?', a: 'The Terminator' },
+          { q: 'What movie has the phrase “May the Force be with you”?', a: 'Star Wars' },
+          { q: 'What movie features a character named Jack Sparrow?', a: 'Pirates of the Caribbean' },
+          { q: 'What movie is about a clownfish searching for his son?', a: 'Finding Nemo' },
+          { q: 'What movie features the song “Let It Go”?', a: 'Frozen' },
+          { q: 'What movie has a wizarding school called Hogwarts?', a: 'Harry Potter' }
+        ]
+      },
+      majority: {
+        label: '📊 Majority Rules',
+        meta: 'No right answer. Teams guess what the majority of the full group will pick.',
+        questions: [
+          { q: 'Coffee or tea?', a: 'Reveal the group vote. Teams that guessed the majority get 1 point.' },
+          { q: 'Beach or mountains?', a: 'Reveal the group vote. Teams that guessed the majority get 1 point.' },
+          { q: 'Early bird or night owl?', a: 'Reveal the group vote. Teams that guessed the majority get 1 point.' },
+          { q: 'Sweet or salty?', a: 'Reveal the group vote. Teams that guessed the majority get 1 point.' },
+          { q: 'Texting or calling?', a: 'Reveal the group vote. Teams that guessed the majority get 1 point.' },
+          { q: 'Road trip or flight?', a: 'Reveal the group vote. Teams that guessed the majority get 1 point.' },
+          { q: 'Comedy or drama?', a: 'Reveal the group vote. Teams that guessed the majority get 1 point.' },
+          { q: 'Work from a beach house or a mountain cabin?', a: 'Reveal the group vote. Teams that guessed the majority get 1 point.' },
+          { q: 'Every meeting is 15 minutes or every meeting has snacks?', a: 'Reveal the group vote. Teams that guessed the majority get 1 point.' },
+          { q: 'Personal chef or personal driver?', a: 'Reveal the group vote. Teams that guessed the majority get 1 point.' }
+        ]
+      },
+      emoji: {
+        label: '🧩 Guess the Emoji',
+        meta: 'Movie, show, or phrase. Fastest correct answer can get a bonus point.',
+        questions: [
+          { q: '🧙‍♂️💍🗻', a: 'Lord of the Rings' },
+          { q: '🐠🔎🌊', a: 'Finding Nemo' },
+          { q: '🚢🧊💔', a: 'Titanic' },
+          { q: '🦁👑', a: 'The Lion King' },
+          { q: '🕷️👨🏙️', a: 'Spider-Man' },
+          { q: '🦖🏝️', a: 'Jurassic Park' },
+          { q: '👽🚲🌕', a: 'E.T.' },
+          { q: '🧊👑❄️', a: 'Frozen' },
+          { q: '🧑‍🍳🐀🍝', a: 'Ratatouille' },
+          { q: '🧪👨‍🔬💰', a: 'Breaking Bad' },
+          { q: '📅😵‍💫📞', a: 'Too many meetings' },
+          { q: '🐢🏁', a: 'Slow and steady wins the race' },
+          { q: '🔥🧯', a: 'Putting out fires' }
+        ]
+      },
+      team: {
+        label: '🏆 Team Fun',
+        meta: 'Teams guess the person. Host can decide by majority vote or quick discussion.',
+        questions: [
+          { q: 'Who is most likely to have 47 browser tabs open?', a: 'Group vote / funniest reasoning wins.' },
+          { q: 'Who is most likely to say “quick question” before asking a complex question?', a: 'Group vote / funniest reasoning wins.' },
+          { q: 'Who is most likely to have the best snacks at their desk?', a: 'Group vote / funniest reasoning wins.' },
+          { q: 'Who is most likely to survive a zombie apocalypse?', a: 'Group vote / funniest reasoning wins.' },
+          { q: 'Who is most likely to accidentally be on mute while giving a great answer?', a: 'Group vote / funniest reasoning wins.' },
+          { q: 'Who is most likely to have a color-coded calendar?', a: 'Group vote / funniest reasoning wins.' },
+          { q: 'Who is most likely to send the perfect GIF in chat?', a: 'Group vote / funniest reasoning wins.' },
+          { q: 'Who is most likely to win trivia night?', a: 'Group vote / funniest reasoning wins.' },
+          { q: 'Who is most likely to have the best vacation recommendations?', a: 'Group vote / funniest reasoning wins.' },
+          { q: 'Who is most likely to become a food critic?', a: 'Group vote / funniest reasoning wins.' }
+        ]
+      },
+      bonus: {
+        label: '⚡ Final Bonus',
+        meta: 'Worth 3 points. Award to the closest, funniest, or majority-backed answer.',
+        questions: [
+          { q: 'Which team member is most likely to accidentally become famous?', a: 'Host awards 3 points.' },
+          { q: 'Create a new team slogan in 30 seconds. Best slogan wins.', a: 'Host awards 3 points.' },
+          { q: 'Pitch the worst possible TV show in one sentence. Funniest pitch wins.', a: 'Host awards 3 points.' },
+          { q: 'Invent a fake office holiday. Best holiday wins.', a: 'Host awards 3 points.' }
+        ]
+      }
+    };
+
+    let state = {
+      admin: false,
+      currentRound: 'pop',
+      currentQuestion: null,
+      played: {},
+      teams: [
+        { name: 'Team Sparkle Sharks', score: 0, members: [] },
+        { name: 'Team Spreadsheet Wizards', score: 0, members: [] },
+        { name: 'Team Snack Committee', score: 0, members: [] }
+      ]
+    };
+
+    let timerInterval = null;
+    let timerValue = 45;
+
+    function init() {
+      loadState();
+      buildRoundSelect();
+      renderTeams();
+      renderAwardButtons();
+      renderQuestion();
+      if (state.admin) document.body.classList.add('admin-on');
+      document.getElementById('roundSelect').value = state.currentRound;
+      syncAdminInputs();
+    }
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) state = { ...state, ...JSON.parse(saved) };
+      } catch (err) {
+        console.warn('Could not load saved state', err);
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function buildRoundSelect() {
+      const select = document.getElementById('roundSelect');
+      select.innerHTML = Object.entries(rounds).map(([key, round]) => `<option value="${key}">${round.label}</option>`).join('');
+    }
+
+    function syncAdminInputs() {
+      state.teams.forEach((team, i) => {
+        const input = document.getElementById(`teamName${i}`);
+        if (input) input.value = team.name;
+      });
+    }
+
+    function unlockAdmin() {
+      const input = document.getElementById('adminPassword');
+      if (!input || input.value === ADMIN_PASSWORD) {
+        state.admin = true;
+        document.body.classList.add('admin-on');
+        saveState();
+        showToast('Host panel unlocked 🔓');
+        syncAdminInputs();
+      } else {
+        showToast('Wrong password');
+      }
+    }
+
+    function lockAdmin() {
+      state.admin = false;
+      document.body.classList.remove('admin-on');
+      saveState();
+      showToast('Host panel locked');
+    }
+
+    function renderTeams() {
+      const grid = document.getElementById('teamGrid');
+      grid.innerHTML = state.teams.map((team, i) => `
+        <div class="team-card">
+          <div class="team-top">
+            <div>
+              <div class="team-name">${escapeHtml(team.name)}</div>
+              <div class="stat-label">${team.members.length || 0} players</div>
+            </div>
+            <div class="score" id="score${i}">${team.score}</div>
+          </div>
+          <div class="members">
+            ${(team.members.length ? team.members : ['Add names in Host Panel']).map(member => `<span class="chip">${escapeHtml(member)}</span>`).join('')}
+          </div>
+          <div class="score-buttons host-only">
+            <button type="button" class="small secondary" onclick="changeScore(${i}, 1)">+1</button>
+            <button type="button" class="small ghost" onclick="changeScore(${i}, -1)">−1</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderAwardButtons() {
+      const area = document.getElementById('awardButtons');
+      area.innerHTML = state.teams.map((team, i) => `
+        <div class="button-row" style="margin-bottom:8px">
+          <button type="button" class="small secondary" onclick="changeScore(${i}, 1)">+1 ${escapeHtml(team.name)}</button>
+          <button type="button" class="small ghost" onclick="changeScore(${i}, 3)">+3 Bonus</button>
+        </div>
+      `).join('');
+    }
+
+    function changeScore(teamIndex, delta) {
+      state.teams[teamIndex].score = Math.max(0, state.teams[teamIndex].score + delta);
+      saveState();
+      renderTeams();
+      renderAwardButtons();
+      if (delta > 0) popMiniConfetti();
+    }
+
+    function renameTeam(index, value) {
+      state.teams[index].name = value.trim() || `Team ${index + 1}`;
+      saveState();
+      renderTeams();
+      renderAwardButtons();
+      syncAdminInputs();
+    }
+
+    function assignTeams() {
+      const namesRaw = document.getElementById('participantInput').value.trim();
+      if (!namesRaw) {
+        showToast('Add participant names first');
+        return;
+      }
+      const names = namesRaw.split(/\n+/).map(n => n.trim()).filter(Boolean);
+      const shuffled = shuffle([...names]);
+      state.teams.forEach(team => team.members = []);
+      shuffled.forEach((name, idx) => state.teams[idx % 3].members.push(name));
+      saveState();
+      renderTeams();
+      showToast('Teams assigned 🎲');
+    }
+
+    function loadSampleNames() {
+      const sample = ['Avery', 'Jordan', 'Sam', 'Taylor', 'Morgan', 'Riley', 'Casey', 'Jamie', 'Drew', 'Quinn', 'Cameron', 'Reese', 'Alex', 'Parker', 'Blake', 'Skyler', 'Devon', 'Hayden'];
+      document.getElementById('participantInput').value = sample.join('\n');
+      showToast('Sample names loaded');
+    }
+
+    function clearParticipants() {
+      document.getElementById('participantInput').value = '';
+      state.teams.forEach(team => team.members = []);
+      saveState();
+      renderTeams();
+      showToast('Names cleared');
+    }
+
+    function setRound(roundKey) {
+      state.currentRound = roundKey;
+      state.currentQuestion = null;
+      saveState();
+      renderQuestion();
+    }
+
+    function nextQuestion() {
+      const round = rounds[state.currentRound];
+      state.played[state.currentRound] = state.played[state.currentRound] || [];
+      const playedIndexes = new Set(state.played[state.currentRound]);
+      let available = round.questions.map((_, i) => i).filter(i => !playedIndexes.has(i));
+      if (!available.length) {
+        state.played[state.currentRound] = [];
+        available = round.questions.map((_, i) => i);
+        showToast('Round reset — recycling questions');
+      }
+      const nextIndex = available[Math.floor(Math.random() * available.length)];
+      state.currentQuestion = { round: state.currentRound, index: nextIndex, revealed: false };
+      saveState();
+      renderQuestion();
+    }
+
+    function revealAnswer() {
+      if (!state.currentQuestion) return showToast('Pick a question first');
+      state.currentQuestion.revealed = true;
+      saveState();
+      renderQuestion();
+    }
+
+    function markQuestionPlayed() {
+      if (!state.currentQuestion) return showToast('No question selected');
+      const { round, index } = state.currentQuestion;
+      state.played[round] = state.played[round] || [];
+      if (!state.played[round].includes(index)) state.played[round].push(index);
+      state.currentQuestion = null;
+      saveState();
+      renderQuestion();
+      showToast('Marked played');
+    }
+
+    function renderQuestion() {
+      const tag = document.getElementById('roundTag');
+      const text = document.getElementById('questionText');
+      const answer = document.getElementById('answerBox');
+      const meta = document.getElementById('questionMeta');
+      const round = rounds[state.currentRound];
+      if (!state.currentQuestion) {
+        tag.textContent = round ? round.label : '🎲 Ready';
+        text.textContent = 'Pick a round and hit “Next Question.”';
+        answer.style.display = 'none';
+        answer.textContent = '';
+        meta.textContent = round ? round.meta : 'Suggested pace: 30 seconds discussion + 10 seconds reveal.';
+        return;
+      }
+      const q = rounds[state.currentQuestion.round].questions[state.currentQuestion.index];
+      tag.textContent = rounds[state.currentQuestion.round].label;
+      text.textContent = q.q;
+      meta.textContent = rounds[state.currentQuestion.round].meta;
+      answer.textContent = `Answer: ${q.a}`;
+      answer.style.display = state.currentQuestion.revealed ? 'block' : 'none';
+    }
+
+    function randomIntroPrompt() {
+      const prompt = introPrompts[Math.floor(Math.random() * introPrompts.length)];
+      document.getElementById('introPrompt').textContent = prompt;
+      showToast('New prompt loaded ✨');
+    }
+
+    function startTimer(seconds) {
+      clearInterval(timerInterval);
+      timerValue = seconds;
+      updateTimerDisplay();
+      timerInterval = setInterval(() => {
+        timerValue -= 1;
+        updateTimerDisplay();
+        if (timerValue <= 0) {
+          clearInterval(timerInterval);
+          showToast('Time! 🎤');
+          popMiniConfetti();
+        }
+      }, 1000);
+    }
+
+    function resetTimer(seconds = 45) {
+      clearInterval(timerInterval);
+      timerValue = seconds;
+      updateTimerDisplay();
+    }
+
+    function updateTimerDisplay() {
+      document.getElementById('timerDisplay').textContent = timerValue;
+    }
+
+    function resetAll() {
+      const ok = confirm('Reset teams, scores, and played questions?');
+      if (!ok) return;
+      localStorage.removeItem(STORAGE_KEY);
+      state = {
+        admin: true,
+        currentRound: 'pop',
+        currentQuestion: null,
+        played: {},
+        teams: [
+          { name: 'Team Sparkle Sharks', score: 0, members: [] },
+          { name: 'Team Spreadsheet Wizards', score: 0, members: [] },
+          { name: 'Team Snack Committee', score: 0, members: [] }
+        ]
+      };
+      saveState();
+      renderTeams();
+      renderAwardButtons();
+      renderQuestion();
+      syncAdminInputs();
+      document.getElementById('roundSelect').value = state.currentRound;
+      showToast('Reset complete');
+    }
+
+    function celebrate(message = 'Winner energy 🏆') {
+      showToast(message);
+      burstConfetti(140);
+    }
+
+    function popMiniConfetti() {
+      burstConfetti(45);
+    }
+
+    function burstConfetti(count = 120) {
+      const canvas = document.getElementById('confetti');
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      ctx.scale(dpr, dpr);
+      const colors = ['#ff64c8', '#ffb84d', '#5ef3c2', '#6ee7ff', '#ffffff'];
+      const pieces = Array.from({ length: count }, () => ({
+        x: Math.random() * window.innerWidth,
+        y: -20 - Math.random() * 120,
+        w: 7 + Math.random() * 8,
+        h: 8 + Math.random() * 12,
+        vy: 3 + Math.random() * 6,
+        vx: -3 + Math.random() * 6,
+        rot: Math.random() * Math.PI,
+        vr: -.2 + Math.random() * .4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        life: 0
+      }));
+      let frame = 0;
+      function draw() {
+        frame++;
+        ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+        pieces.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.rot += p.vr;
+          p.life++;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+        });
+        if (frame < 180) requestAnimationFrame(draw);
+        else ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      }
+      draw();
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(showToast._timeout);
+      showToast._timeout = setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    window.addEventListener('resize', () => {
+      const canvas = document.getElementById('confetti');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+
+    init();
+  </script>
+</body>
+</html>

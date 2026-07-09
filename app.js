@@ -87,8 +87,6 @@
   let soundOn = localStorage.getItem(SOUND_KEY) === '1';
   let adminHidden = false;
 
-  init();
-
   async function init(){
     store = createStore();
     await store.init();
@@ -600,4 +598,11 @@
     }
     setTimeout(() => c.innerHTML = '', 2200);
   }
+
+  init().catch((err) => {
+    console.error(err);
+    if (app) {
+      app.innerHTML = `<section class="card hero"><div style="font-size:54px">⚠️</div><h2>Couldn’t start the game</h2><p class="muted">Refresh the page. If this keeps happening, check the browser console for the error.</p></section>`;
+    }
+  });
 })();

@@ -75,6 +75,8 @@
   let modal = null;
   let toastTimer = null;
   let renderTimer = null;
+  let renderQueued = false;
+  let renderPending = false;
 
   document.addEventListener("DOMContentLoaded", boot);
 
@@ -94,7 +96,8 @@
       await ensureEventState();
       attachRealtimeListeners();
       attachEventHandlers();
-      renderTimer = window.setInterval(() => render(), 1000);
+      attachEditProtection();
+      renderTimer = window.setInterval(() => scheduleRender(), 1000);
     } catch (err) {
       console.error(err);
       renderFatal(err.message || "The app could not start.");
@@ -115,10 +118,10 @@
   }
 
   function attachRealtimeListeners() {
-    rootRef.child("state").on("value", (snap) => { state = snap.val() || defaultState(); render(); });
-    rootRef.child("players").on("value", (snap) => { players = snap.val() || {}; render(); });
-    rootRef.child("answers").on("value", (snap) => { answers = snap.val() || {}; render(); });
-    rootRef.child("teamAnswers").on("value", (snap) => { teamAnswers = snap.val() || {}; render(); });
+    rootRef.child("state").on("value", (snap) => { state = snap.val() || defaultState(); scheduleRender(); });
+    rootRef.child("players").on("value", (snap) => { players = snap.val() || {}; scheduleRender(); });
+    rootRef.child("answers").on("value", (snap) => { answers = snap.val() || {}; scheduleRender(); });
+    rootRef.child("teamAnswers").on("value", (snap) => { teamAnswers = snap.val() || {}; scheduleRender(); });
   }
 
   function attachEventHandlers() {
@@ -142,8 +145,8 @@
       switch (action) {
         case "saveProfile": return saveProfile(el);
         case "selectTeam": return selectTeam(el.dataset.team);
-        case "openHost": modal = "host"; return render();
-        case "closeModal": modal = null; return render();
+        case "openHost": modal = "host"; return render(true);
+        case "closeModal": modal = null; return render(true);
         case "unlockHost": return unlockHost(el);
         case "copyLink": return copyLink();
         case "signOut": return signOut();
@@ -227,8 +230,26 @@
     return bank[state?.current?.index || 0] || bank[0] || null;
   }
 
-  function render() {
+  function scheduleRender(force = false) {
+    if (force) {
+      render(true);
+      return;
+    }
+    if (renderQueued) return;
+    renderQueued = true;
+    window.requestAnimationFrame(() => {
+      renderQueued = false;
+      render(false);
+    });
+  }
+
+  function render(force = false) {
     if (!state) return;
+    if (!force && isUserEditing()) {
+      renderPending = true;
+      return;
+    }
+    renderPending = false;
     const p = currentPlayer();
     const view = !p?.name ? "join" : !p?.team ? "team" : "play";
     $app.innerHTML = `
@@ -240,6 +261,27 @@
       </main>
       ${modal === "host" ? renderHostModal() : ""}
     `;
+  }
+
+  function attachEditProtection() {
+    document.addEventListener("focusout", (event) => {
+      if (!$app.contains(event.target) || !isEditableElement(event.target)) return;
+      window.setTimeout(() => {
+        if (renderPending && !isUserEditing()) scheduleRender(true);
+      }, 250);
+    });
+  }
+
+  function isUserEditing() {
+    const el = document.activeElement;
+    return isEditableElement(el) && $app.contains(el);
+  }
+
+  function isEditableElement(el) {
+    return Boolean(el && (
+      el.matches?.("input, textarea, select") ||
+      el.isContentEditable
+    ));
   }
 
   function renderHeader(view) {
@@ -759,7 +801,7 @@
     localStorage.setItem(HOST_KEY, "true");
     modal = null;
     toast("Host controls unlocked.");
-    render();
+    render(true);
   }
 
   async function startGame(type) {

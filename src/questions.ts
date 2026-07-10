@@ -24,7 +24,7 @@ export const QUESTIONS: Question[] = [
     a: "Office legend everyone's a little scared of",
     b: 'Office favorite everyone forgets is actually great at their job',
   },
-  { a: 'A job that pays amazing but bores you stiff', b: 'One you love that pays just okay' },
+  { a: 'A role that looks great on LinkedIn', b: 'A role that feels great on Monday' },
   { a: 'Smartest person in the room', b: 'Happiest' },
   {
     a: 'Blurt out your honest opinion in every meeting',

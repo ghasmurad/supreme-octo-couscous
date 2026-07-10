@@ -17,8 +17,8 @@ export const QUESTIONS: Question[] = [
   { a: 'One ride-or-die best friend', b: 'A squad of five friends always down for anything' },
   { a: 'Bomb a joke in front of the whole office', b: 'Never get to tell your best joke at all' },
   {
-    a: 'Your boss only ever says "good job" — even when it’s not',
-    b: 'Only gives you real feedback, even when it stings',
+    a: 'Receive encouraging feedback, even if it’s vague',
+    b: 'Receive direct feedback, even if it’s harsh',
   },
   {
     a: "Office legend everyone's a little scared of",

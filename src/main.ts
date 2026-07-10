@@ -74,7 +74,7 @@ function renderHome(): void {
       <div class="card">
         <div class="field">
           <label for="name-input">Your name</label>
-          <input id="name-input" type="text" maxlength="24" placeholder="e.g. Ghassan" autocomplete="off" />
+          <input id="name-input" type="text" maxlength="24" placeholder="e.g. Jane" autocomplete="off" />
         </div>
         <button id="host-btn" class="btn btn-primary">Host a Game</button>
 
